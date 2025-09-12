@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Welcome to VPlay"
+        android:textSize="24sp"
+        android:paddingBottom="12dp" />
+
+    <TextView
+        android:id="@+id/subtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="A simple, modern media player with queue, PiP, gestures, and playlists."
+        android:paddingBottom="24dp" />
+
+    <Button
+        android:id="@+id/btn_get_started"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Get started" />
+
+</LinearLayout>

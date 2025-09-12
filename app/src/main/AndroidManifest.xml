@@ -2,6 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Permissions for reading media from device storage -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <!-- Android 13+ notification permission for media controls -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33" />
+    <!-- For Android 12 and below -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        tools:targetApi="32" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -11,15 +20,30 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.VPlay">
+        <service
+            android:name=".media.PlaybackService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
         <activity
-            android:name=".MainActivity"
+            android:name=".onboarding.OnboardingActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:supportsPictureInPicture="true" />
+
+        <!-- Route hardware media button events to the active MediaSession -->
+        <receiver android:name="androidx.media.session.MediaButtonReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

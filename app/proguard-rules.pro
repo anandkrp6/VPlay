@@ -19,3 +19,22 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Media3 / ExoPlayer keep rules
+-keep class androidx.media3.** { *; }
+-dontwarn androidx.media3.**
+
+# Room keep rules
+-keep class androidx.room.** { *; }
+-keep class * extends androidx.room.RoomDatabase
+-keepclassmembers class ** implements androidx.room.RoomDatabase {
+	<init>(...);
+}
+-dontwarn androidx.room.**
+
+# Kotlin serialization
+-keep class kotlinx.serialization.** { *; }
+-keepclassmembers class ** {
+	@kotlinx.serialization.Serializable *;
+}
+-dontwarn kotlinx.serialization.**

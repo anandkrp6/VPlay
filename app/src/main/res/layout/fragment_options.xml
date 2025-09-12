@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Explorer &amp; Settings"
+        android:textAppearance="@style/TextAppearance.Material3.TitleLarge" />
+
+    <Button
+        android:id="@+id/btn_pick_media"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Pick media" />
+
+    <TextView
+        android:id="@+id/last_picked"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Last: (none)"
+        android:layout_marginTop="8dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp">
+        <Button
+            android:id="@+id/btn_play_picked"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Play now" />
+        <Space android:layout_width="8dp" android:layout_height="wrap_content"/>
+        <Button
+            android:id="@+id/btn_add_queue_picked"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Add to queue" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#333"
+        android:layout_marginTop="16dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Permissions (placeholder)"
+        android:layout_marginTop="12dp" />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#333"
+        android:layout_marginTop="16dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Gesture sensitivities"
+        android:layout_marginTop="12dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginTop="8dp">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Seek sensitivity"/>
+            <SeekBar android:id="@+id/seek_sens" android:layout_width="150dp" android:layout_height="wrap_content" android:max="200"/>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Volume sensitivity"/>
+            <SeekBar android:id="@+id/vol_sens" android:layout_width="150dp" android:layout_height="wrap_content" android:max="200"/>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Brightness sensitivity"/>
+            <SeekBar android:id="@+id/bright_sens" android:layout_width="150dp" android:layout_height="wrap_content" android:max="200"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Storage: TBD\nNotifications: TBD\nCamera: TBD\nMicrophone: TBD"
+        android:layout_marginTop="4dp" />
+
+</LinearLayout>

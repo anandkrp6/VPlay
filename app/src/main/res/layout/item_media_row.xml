@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="12dp">
+
+    <ImageView
+        android:id="@+id/thumb"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:contentDescription="thumbnail"
+        android:scaleType="centerCrop"
+        android:src="@drawable/ic_launcher_foreground"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="Title"
+        android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+        app:layout_constraintTop_toTopOf="@id/thumb"
+        app:layout_constraintStart_toEndOf="@id/thumb"
+        app:layout_constraintEnd_toStartOf="@id/btn_play_now"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="8dp" />
+
+    <TextView
+        android:id="@+id/subtitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="Subtitle"
+        android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+        app:layout_constraintTop_toBottomOf="@id/title"
+        app:layout_constraintStart_toStartOf="@id/title"
+        app:layout_constraintEnd_toStartOf="@id/btn_play_now"
+        android:layout_marginTop="2dp" />
+
+    <TextView
+        android:id="@+id/progress_badge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Continue"
+        android:padding="4dp"
+        android:textSize="12sp"
+        android:textColor="@android:color/white"
+        android:background="#6633B5E5"
+        app:layout_constraintStart_toStartOf="@id/title"
+        app:layout_constraintTop_toBottomOf="@id/subtitle"
+        android:layout_marginTop="2dp"
+        android:visibility="gone" />
+
+    <ImageButton
+        android:id="@+id/btn_add_queue"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:contentDescription="Add to queue"
+        android:src="@android:drawable/ic_input_add"
+        app:tint="@android:color/black"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageButton
+        android:id="@+id/btn_play_now"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:contentDescription="Play now"
+        android:src="@android:drawable/ic_media_play"
+        app:tint="@android:color/black"
+        app:layout_constraintEnd_toStartOf="@id/btn_add_queue"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginEnd="8dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
