@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">VPlay</string>
+    <string name="app_name">vPlay</string>
     <string-array name="empty_array" />
     <string name="sort_title">Title</string>
     <string name="sort_date">Date</string>

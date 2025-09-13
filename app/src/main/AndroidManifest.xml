@@ -5,6 +5,7 @@
     <!-- Permissions for reading media from device storage -->
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- Android 13+ notification permission for media controls -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33" />
     <!-- For Android 12 and below -->

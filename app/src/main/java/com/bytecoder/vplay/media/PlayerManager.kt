@@ -12,6 +12,12 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
+import androidx.media3.common.C
+import com.bytecoder.vplay.settings.AppSettings
+import androidx.media3.common.TrackSelectionParameters
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.booleanOrNull
@@ -47,7 +53,19 @@ object PlayerManager {
         val existing = player
         if (existing != null) return existing
         appContext = context.applicationContext
-        val p = ExoPlayer.Builder(context).build()
+        // Configure HTTP data source with timeouts from settings
+        val httpFactory = DefaultHttpDataSource.Factory()
+            .setConnectTimeoutMs(AppSettings.getConnectTimeoutMs(context))
+            .setReadTimeoutMs(AppSettings.getReadTimeoutMs(context))
+        val mediaSourceFactory = DefaultMediaSourceFactory(httpFactory)
+        val retryPolicy = object: DefaultLoadErrorHandlingPolicy() {
+            override fun getMinimumLoadableRetryCount(dataType: Int): Int {
+                return AppSettings.getRetryCount(context)
+            }
+        }
+        val p = ExoPlayer.Builder(context)
+            .setMediaSourceFactory(mediaSourceFactory)
+            .build()
         p.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 _isPlaying.postValue(isPlaying)
@@ -60,8 +78,39 @@ object PlayerManager {
                 if (!restoring && player.currentMediaItem != null && player.duration > 0) {
                     savePerItemProgress(player.currentMediaItem!!.mediaId, player.currentPosition)
                 }
+                try { com.bytecoder.vplay.settings.EqualizerController.attach(context) } catch (_: Exception) {}
+            }
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                // Apply default speed and remember-position when a new item starts
+                val ctx = appContext ?: return
+                val sp = AppSettings.getDefaultSpeed(ctx)
+                if (sp > 0f) p.playbackParameters = p.playbackParameters.withSpeed(sp)
+                if (mediaItem != null && AppSettings.isRememberPosition(ctx)) {
+                    val pos = getPerItemProgress(ctx, mediaItem.mediaId)
+                    if (pos > 0) p.seekTo(pos)
+                }
+                val cap = AppSettings.getMaxVideoBitrate(ctx)
+                if (cap >= 0) {
+                    p.trackSelectionParameters = p.trackSelectionParameters.buildUpon()
+                        .setMaxVideoBitrate(cap)
+                        .build()
+                } else {
+                    // Reset to default (no cap)
+                    p.trackSelectionParameters = p.trackSelectionParameters.buildUpon()
+                        .setMaxVideoBitrate(Int.MAX_VALUE)
+                        .build()
+                }
             }
         })
+        // Apply initial defaults
+        val sp = AppSettings.getDefaultSpeed(context)
+        if (sp > 0f && sp != 1.0f) p.playbackParameters = p.playbackParameters.withSpeed(sp)
+        // Autoplay next toggle using pause-at-end-of-media-items
+        p.pauseAtEndOfMediaItems = !AppSettings.isAutoplayNext(context)
+        val cap = AppSettings.getMaxVideoBitrate(context)
+        p.trackSelectionParameters = p.trackSelectionParameters.buildUpon()
+            .setMaxVideoBitrate(if (cap >= 0) cap else Int.MAX_VALUE)
+            .build()
         player = p
         // Ensure service is running for background controls
         context.startService(Intent(context, PlaybackService::class.java))

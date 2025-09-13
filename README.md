@@ -9,6 +9,7 @@ A simple, modern Android media player using AndroidX Media3 with:
 - Media libraries (Videos, Music) with search, sort, and folder filter
 - Playlists (Room), Online URL playback, and SAF picker
 - Media-style notifications and headset/BT media button support
+- Downloads manager (enqueue from Online, manage in-app)
 
 ## Build
 
@@ -25,6 +26,15 @@ Open the project in Android Studio or build with Gradle.
 - Videos/Music tabs let you browse local media; search and sort are available
 - Use the mini-player for quick controls; tap it to open the queue and drag to reorder
 - Enter Picture-in-Picture by leaving the app during playback
+- Online tab: paste a direct media URL to play or download; tap "Manage Downloads" to view status
+
+## Downloads
+
+VPlay uses the system DownloadManager to fetch online media:
+
+- From Online: tap "Download" to enqueue; the system shows a notification on completion.
+- Manage Downloads: in Online (or Options), open the Downloads screen to see progress, open completed files, or cancel in-flight tasks.
+- Files are saved in the public Downloads directory.
 
 ## Architecture
 
@@ -32,6 +42,13 @@ Open the project in Android Studio or build with Gradle.
 - `PlayerManager` singleton for player lifecycle, queue ops, and persistence (queue and last position)
 - Fragments + XML layouts for UI; RecyclerView for lists
 - Room for playlists; Coil for thumbnails and artwork
+
+## Roadmap (short)
+
+- Subtitles: selection dialog, styling, and offset controls
+- Download details: error messages, clear-completed, and swipe-to-remove
+- Music: crossfade, gapless toggle, and lyrics view
+- Settings hub: player defaults and permission states
 
 ## Troubleshooting
 

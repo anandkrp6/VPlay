@@ -6,5 +6,6 @@ data class MediaItemModel(
     val subtitle: String? = null,
     val uri: String,
     val isVideo: Boolean = false,
-    val durationMs: Long = 0L
+    val durationMs: Long = 0L,
+    val thumbnailPath: String? = null
 )
