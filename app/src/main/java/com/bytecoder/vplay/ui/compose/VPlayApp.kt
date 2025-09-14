@@ -11,21 +11,42 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.*
+import androidx.navigation.navArgument
 import com.bytecoder.vplay.media.PlaybackQueueViewModel
 import com.bytecoder.vplay.media.MediaItemModel
+import com.bytecoder.vplay.ui.compose.screens.*
+import com.bytecoder.vplay.ui.compose.components.MiniPlayer
 
-// Simplified navigation for successful migration demo
+// Tab mode for content tabs
+enum class TabMode {
+    LIBRARY,
+    PLAYLISTS
+}
+
+// Comprehensive navigation for restored feature set
 sealed class VPlayScreen(val route: String, val title: String, val icon: ImageVector) {
-    object Home : VPlayScreen("home", "Home", Icons.Default.Home)
-    object Queue : VPlayScreen("queue", "Queue", Icons.AutoMirrored.Filled.PlaylistPlay)
+    object Video : VPlayScreen("videos", "Video", Icons.Default.VideoFile)
+    object Music : VPlayScreen("music", "Music", Icons.Default.MusicNote)
+    object Online : VPlayScreen("online", "Online", Icons.Default.Language)
+    object Options : VPlayScreen("tools", "Options", Icons.Default.Build)
     object Settings : VPlayScreen("settings", "Settings", Icons.Default.Settings)
+    
+    // Detailed screens
+    object AudioPlayer : VPlayScreen("audio_player", "Audio Player", Icons.Default.MusicNote)
+    object VideoPlayer : VPlayScreen("video_player/{videoId}", "Video Player", Icons.Default.PlayArrow)
+    object Downloads : VPlayScreen("downloads", "Downloads", Icons.Default.Download)
+    object FileExplorer : VPlayScreen("file_explorer", "File Explorer", Icons.Default.Folder)
+    object PrivacyManager : VPlayScreen("privacy_manager", "Privacy", Icons.Default.Security)
+    object MediaTools : VPlayScreen("media_tools", "Media Tools", Icons.Default.AudioFile)
 }
 
 @Composable
@@ -33,15 +54,35 @@ fun VPlayApp(
     queueViewModel: PlaybackQueueViewModel,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
+    // Define screens list first
     val screens = listOf(
-        VPlayScreen.Home,
-        VPlayScreen.Queue,
-        VPlayScreen.Settings
+        VPlayScreen.Video,
+        VPlayScreen.Music,
+        VPlayScreen.Online,
+        VPlayScreen.Options
     )
+
+    // Persistent state for last used tab (default: Video)
+    val sharedPrefs = remember { 
+        context.getSharedPreferences("vplay_prefs", android.content.Context.MODE_PRIVATE) 
+    }
+    val lastUsedTab = remember { 
+        sharedPrefs.getString("last_used_tab", VPlayScreen.Video.route) ?: VPlayScreen.Video.route 
+    }
+
+    // Save current tab when navigation changes
+    LaunchedEffect(currentDestination?.route) {
+        currentDestination?.route?.let { route ->
+            if (screens.any { it.route == route }) {
+                sharedPrefs.edit().putString("last_used_tab", route).apply()
+            }
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -65,21 +106,63 @@ fun VPlayApp(
             }
         }
     ) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = VPlayScreen.Home.route,
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            composable(VPlayScreen.Home.route) {
-                HomeScreen()
-            }
-            composable(VPlayScreen.Queue.route) {
-                QueueScreen(queueViewModel = queueViewModel)
-            }
+        Box(modifier = Modifier.padding(innerPadding)) {
+            NavHost(
+                navController = navController,
+                startDestination = lastUsedTab,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                composable(VPlayScreen.Video.route) {
+                    VideosScreen(queueViewModel = queueViewModel, navController = navController)
+                }
+                composable(VPlayScreen.Music.route) {
+                    MusicScreen(queueViewModel = queueViewModel, navController = navController)
+                }
+                composable(VPlayScreen.Online.route) {
+                    OnlineScreen(queueViewModel = queueViewModel, navController = navController)
+                }
+                composable(VPlayScreen.Options.route) {
+                    ToolsScreen(queueViewModel = queueViewModel, navController = navController)
+                }
             composable(VPlayScreen.Settings.route) {
-                SettingsScreen()
+                SettingsScreen(navController = navController)
+            }
+            
+            // Detailed screens
+            composable(VPlayScreen.AudioPlayer.route) {
+                AudioPlayerScreen(queueViewModel = queueViewModel, navController = navController)
+            }
+            composable(
+                VPlayScreen.VideoPlayer.route,
+                arguments = listOf(navArgument("videoId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val videoId = backStackEntry.arguments?.getString("videoId") ?: ""
+                VideoPlayerScreen(videoId = videoId, queueViewModel = queueViewModel, navController = navController)
+            }
+            composable(VPlayScreen.Downloads.route) {
+                DownloadsScreen(queueViewModel = queueViewModel, navController = navController)
+            }
+            composable(VPlayScreen.FileExplorer.route) {
+                FileExplorerScreen(queueViewModel = queueViewModel, navController = navController)
+            }
+            composable(VPlayScreen.PrivacyManager.route) {
+                PrivacyManagerScreen(queueViewModel = queueViewModel, navController = navController)
+            }
+            composable(VPlayScreen.MediaTools.route) {
+                MediaToolsScreen(queueViewModel = queueViewModel, navController = navController)
             }
         }
+        
+        // Mini-player overlay
+        MiniPlayer(
+            queueViewModel = queueViewModel,
+            onNavigateToQueue = { 
+                // Navigate to audio player since we removed separate queue tab
+                navController.navigate("audio_player")
+            },
+            onRequestNotificationPermission = { /* TODO: Handle permissions */ },
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }
 
@@ -132,100 +215,4 @@ fun HomeScreen() {
             }
         }
     }
-}
-
-@Composable
-fun QueueScreen(queueViewModel: PlaybackQueueViewModel) {
-    // Use remember to create state holders instead of collectAsState() since the ViewModel doesn't have StateFlow
-    var currentMedia by remember { mutableStateOf<MediaItemModel?>(null) }
-    var isPlaying by remember { mutableStateOf(false) }
-    var queue by remember { mutableStateOf<List<MediaItemModel>>(emptyList()) }
-    
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = "Playback Queue",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
-        )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        if (currentMedia != null) {
-            Card(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "Now Playing",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = currentMedia?.title ?: "Unknown",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    Text(
-                        text = if (isPlaying) "Playing" else "Paused",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-                }
-            }
-        } else {
-            Text(
-                text = "No media in queue",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Text(
-            text = "Queue: ${queue.size} items",
-            style = MaterialTheme.typography.bodyMedium
-        )
-    }
-}
-
-@Composable
-fun SettingsScreen() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "Settings",
-            style = MaterialTheme.typography.headlineMedium
-        )
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        Card(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = "Migration Status",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "✅ Jetpack Compose UI\n✅ Material 3 Design System\n✅ Modern Navigation Component\n✅ ComponentActivity Architecture\n✅ StateFlow/LiveData Integration",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-        }
-    }
-}
+}}
