@@ -22,11 +22,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VPlay">
         <service
-            android:name=".media.PlaybackService"
+            android:name=".backend.services.PlaybackService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
         <activity
-            android:name=".onboarding.OnboardingActivity"
+            android:name=".OnboardingActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

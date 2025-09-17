@@ -14,14 +14,15 @@ import androidx.compose.runtime.getValue
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.media3.common.util.UnstableApi
-import com.bytecoder.vplay.media.PlaybackQueueViewModel
-import com.bytecoder.vplay.media.PlayerManager
-import com.bytecoder.vplay.settings.AppSettings
-import com.bytecoder.vplay.ui.compose.VPlayApp
-import com.bytecoder.vplay.ui.theme.VPlayTheme
+import com.bytecoder.vplay.frontend.viewmodels.PlaybackQueueViewModel
+import com.bytecoder.vplay.backend.managers.PlayerManager
+import com.bytecoder.vplay.backend.utils.AppSettings
+import com.bytecoder.vplay.VPlayApp
+import com.bytecoder.vplay.frontend.ui.theme.VPlayTheme
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
+import com.bytecoder.vplay.backend.services.PlaybackService
 
 class MainActivity : ComponentActivity() {
 
@@ -59,7 +60,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         // Inform service app is foreground; hide persistent notification
-        startService(android.content.Intent(this, com.bytecoder.vplay.media.PlaybackService::class.java).setAction(com.bytecoder.vplay.media.PlaybackService.ACTION_APP_FOREGROUND))
+        startService(android.content.Intent(this, PlaybackService::class.java).setAction(PlaybackService.ACTION_APP_FOREGROUND))
     }
 
     @OptIn(UnstableApi::class)
@@ -90,17 +91,17 @@ class MainActivity : ComponentActivity() {
     private fun buildPipParams(): android.app.PictureInPictureParams {
         val playPauseIntent = android.app.PendingIntent.getService(
             this, 201,
-            android.content.Intent(this, com.bytecoder.vplay.media.PlaybackService::class.java).setAction(com.bytecoder.vplay.media.PlaybackService.ACTION_PLAY_PAUSE),
+            android.content.Intent(this, PlaybackService::class.java).setAction(PlaybackService.ACTION_PLAY_PAUSE),
             android.app.PendingIntent.FLAG_UPDATE_CURRENT or (if (android.os.Build.VERSION.SDK_INT >= 23) android.app.PendingIntent.FLAG_IMMUTABLE else 0)
         )
         val nextIntent = android.app.PendingIntent.getService(
             this, 202,
-            android.content.Intent(this, com.bytecoder.vplay.media.PlaybackService::class.java).setAction(com.bytecoder.vplay.media.PlaybackService.ACTION_NEXT),
+            android.content.Intent(this, PlaybackService::class.java).setAction(PlaybackService.ACTION_NEXT),
             android.app.PendingIntent.FLAG_UPDATE_CURRENT or (if (android.os.Build.VERSION.SDK_INT >= 23) android.app.PendingIntent.FLAG_IMMUTABLE else 0)
         )
         val prevIntent = android.app.PendingIntent.getService(
             this, 203,
-            android.content.Intent(this, com.bytecoder.vplay.media.PlaybackService::class.java).setAction(com.bytecoder.vplay.media.PlaybackService.ACTION_PREV),
+            android.content.Intent(this, PlaybackService::class.java).setAction(PlaybackService.ACTION_PREV),
             android.app.PendingIntent.FLAG_UPDATE_CURRENT or (if (android.os.Build.VERSION.SDK_INT >= 23) android.app.PendingIntent.FLAG_IMMUTABLE else 0)
         )
         val isPlaying = PlayerManager.isPlaying.value == true
