@@ -12,7 +12,7 @@ import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.source.SingleSampleMediaSource
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.extractor.DefaultExtractorsFactory
-import androidx.media3.datasource.DefaultDataSourceFactory
+import androidx.media3.datasource.DefaultHttpDataSource
 import com.bytecoder.vplay.backend.managers.AnalyticsManager
 import com.bytecoder.vplay.backend.utils.EqualizerController
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -212,7 +212,7 @@ class AdvancedPlayerManager(private val context: Context) {
         val player = initializePlayer()
         
         try {
-            val dataSourceFactory = DefaultDataSourceFactory(context, "VPlay")
+            val dataSourceFactory = DefaultHttpDataSource.Factory().setUserAgent("VPlay")
             val extractorsFactory = DefaultExtractorsFactory()
             
             // Create main media source
@@ -327,7 +327,7 @@ class AdvancedPlayerManager(private val context: Context) {
                 .build()
             
             val subtitleSource = SingleSampleMediaSource.Factory(
-                DefaultDataSourceFactory(context, "VPlay")
+                DefaultHttpDataSource.Factory().setUserAgent("VPlay")
             ).createMediaSource(
                 subtitleMediaItem,
                 C.TIME_UNSET
@@ -336,7 +336,7 @@ class AdvancedPlayerManager(private val context: Context) {
             // Get current video source and merge with new subtitle
             val currentSource = player.currentMediaItem?.let { mediaItem ->
                 ProgressiveMediaSource.Factory(
-                    DefaultDataSourceFactory(context, "VPlay"),
+                    DefaultHttpDataSource.Factory().setUserAgent("VPlay"),
                     DefaultExtractorsFactory()
                 ).createMediaSource(mediaItem)
             }

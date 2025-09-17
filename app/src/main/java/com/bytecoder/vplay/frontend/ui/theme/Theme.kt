@@ -14,7 +14,6 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 private val DarkColorScheme = darkColorScheme(
     primary = md_theme_dark_primary,
@@ -98,28 +97,14 @@ fun VPlayTheme(
     }
     
     val view = LocalView.current
-    val systemUiController = rememberSystemUiController()
     
     if (!view.isInEditMode) {
         SideEffect {
-            // Update the system bars to match our theme
-            systemUiController.setSystemBarsColor(
-                color = colorScheme.surface,
-                darkIcons = !darkTheme
-            )
-            
-            // Make status bar transparent for immersive experience
-            systemUiController.setStatusBarColor(
-                color = colorScheme.surface,
-                darkIcons = !darkTheme
-            )
-            
-            // Handle navigation bar
-            systemUiController.setNavigationBarColor(
-                color = colorScheme.surface,
-                darkIcons = !darkTheme,
-                navigationBarContrastEnforced = false
-            )
+            val window = (view.context as Activity).window
+            window.statusBarColor = colorScheme.surface.toArgb()
+            window.navigationBarColor = colorScheme.surface.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !darkTheme
         }
     }
 
@@ -145,16 +130,8 @@ fun VPlayPlayerTheme(
         onSurfaceVariant = PlayerOnSurface,
     )
     
-    val systemUiController = rememberSystemUiController()
-    
-    SideEffect {
-        // Make system bars completely transparent for immersive player experience
-        systemUiController.setSystemBarsColor(
-            color = PlayerBackground,
-            darkIcons = false
-        )
-        systemUiController.isSystemBarsVisible = false
-    }
+    // Note: For immersive player experience, handle system bars in the player Activity
+    // using WindowCompat.setDecorFitsSystemWindows(window, false)
 
     MaterialTheme(
         colorScheme = playerColorScheme,

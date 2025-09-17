@@ -3,6 +3,7 @@ package com.bytecoder.vplay
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,21 +29,22 @@ enum class TabMode {
 
 // Comprehensive navigation for restored feature set
 sealed class VPlayScreen(val route: String, val title: String, val icon: ImageVector) {
-    object Video : VPlayScreen("videos", "Video", Icons.Default.VideoFile)
-    object Music : VPlayScreen("music", "Music", Icons.Default.MusicNote)
-    object Online : VPlayScreen("online", "Online", Icons.Default.Language)
-    object Options : VPlayScreen("tools", "Options", Icons.Default.Build)
-    object Settings : VPlayScreen("settings", "Settings", Icons.Default.Settings)
+    object Video : VPlayScreen("videos", "Videos", Icons.Filled.VideoLibrary)
+    object Music : VPlayScreen("music", "Music", Icons.Filled.LibraryMusic)
+    object Online : VPlayScreen("online", "Online", Icons.Filled.CloudQueue)
+    object Options : VPlayScreen("tools", "Tools", Icons.Filled.Build)
+    object Settings : VPlayScreen("settings", "Settings", Icons.Filled.Settings)
     
     // Detailed screens
-    object AudioPlayer : VPlayScreen("audio_player", "Audio Player", Icons.Default.MusicNote)
-    object VideoPlayer : VPlayScreen("video_player/{videoId}", "Video Player", Icons.Default.PlayArrow)
-    object Downloads : VPlayScreen("downloads", "Downloads", Icons.Default.Download)
-    object FileExplorer : VPlayScreen("file_explorer", "File Explorer", Icons.Default.Folder)
-    object PrivacyManager : VPlayScreen("privacy_manager", "Privacy", Icons.Default.Security)
-    object MediaTools : VPlayScreen("media_tools", "Media Tools", Icons.Default.AudioFile)
+    object AudioPlayer : VPlayScreen("audio_player", "Now Playing", Icons.Filled.MusicNote)
+    object VideoPlayer : VPlayScreen("video_player/{videoId}", "Video Player", Icons.Filled.PlayCircle)
+    object Downloads : VPlayScreen("downloads", "Downloads", Icons.Filled.Download)
+    object FileExplorer : VPlayScreen("file_explorer", "Files", Icons.Filled.Folder)
+    object PrivacyManager : VPlayScreen("privacy_manager", "Privacy", Icons.Filled.Security)
+    object MediaTools : VPlayScreen("media_tools", "Media Tools", Icons.Filled.AudioFile)
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VPlayApp(
     queueViewModel: PlaybackQueueViewModel,
@@ -61,12 +63,12 @@ fun VPlayApp(
         VPlayScreen.Options
     )
 
-    // Persistent state for last used tab (default: Video)
+    // Persistent state for last used tab (default: Music)
     val sharedPrefs = remember { 
         context.getSharedPreferences("vplay_prefs", android.content.Context.MODE_PRIVATE) 
     }
     val lastUsedTab = remember { 
-        sharedPrefs.getString("last_used_tab", VPlayScreen.Video.route) ?: VPlayScreen.Video.route 
+        sharedPrefs.getString("last_used_tab", VPlayScreen.Music.route) ?: VPlayScreen.Music.route 
     }
 
     // Save current tab when navigation changes
@@ -80,11 +82,29 @@ fun VPlayApp(
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                contentColor = MaterialTheme.colorScheme.onSurface
+            ) {
                 screens.forEach { screen ->
                     NavigationBarItem(
-                        icon = { Icon(screen.icon, contentDescription = null) },
-                        label = { Text(screen.title) },
+                        icon = { 
+                            Icon(
+                                imageVector = screen.icon, 
+                                contentDescription = screen.title,
+                                tint = if (currentDestination?.hierarchy?.any { it.route == screen.route } == true) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                }
+                            ) 
+                        },
+                        label = { 
+                            Text(
+                                text = screen.title,
+                                style = MaterialTheme.typography.labelMedium
+                            ) 
+                        },
                         selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                         onClick = {
                             navController.navigate(screen.route) {
@@ -94,7 +114,14 @@ fun VPlayApp(
                                 launchSingleTop = true
                                 restoreState = true
                             }
-                        }
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = MaterialTheme.colorScheme.primary,
+                            selectedTextColor = MaterialTheme.colorScheme.primary,
+                            unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            indicatorColor = MaterialTheme.colorScheme.primaryContainer
+                        )
                     )
                 }
             }
@@ -157,6 +184,7 @@ fun VPlayApp(
             onRequestNotificationPermission = { /* TODO: Handle permissions */ },
             modifier = Modifier.align(Alignment.BottomCenter)
         )
+        }
     }
 }
 
@@ -209,4 +237,4 @@ fun HomeScreen() {
             }
         }
     }
-}}
+}
