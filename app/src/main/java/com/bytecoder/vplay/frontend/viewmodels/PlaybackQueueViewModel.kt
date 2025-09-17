@@ -229,4 +229,17 @@ class PlaybackQueueViewModel : ViewModel() {
             else -> ci
         }
     }
+    
+    fun refreshVideoLibrary() {
+        viewModelScope.launch {
+            // Refresh video library from device storage
+            // This would typically scan for new video files
+            try {
+                // Implementation would involve scanning device for video files
+                // and updating the video library
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
 }

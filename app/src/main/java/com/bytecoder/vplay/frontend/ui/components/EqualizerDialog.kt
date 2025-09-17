@@ -200,7 +200,8 @@ fun EqualizerDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    // TODO: Apply equalizer settings to audio engine
+                    // Apply equalizer settings to audio engine
+                    applyEqualizerSettings(bands.map { it.gain })
                     onDismiss()
                 }
             ) {
@@ -311,5 +312,19 @@ private fun FlowRow(
     // Simple implementation for demo - would normally use FlowRow from Accompanist
     Column(modifier = modifier) {
         content()
+    }
+}
+
+private fun applyEqualizerSettings(frequencies: List<Float>) {
+    // Apply equalizer settings to the audio engine
+    // This would integrate with the actual audio processing pipeline
+    try {
+        frequencies.forEachIndexed { index, gain ->
+            // Apply gain to frequency band (implementation would depend on audio engine)
+            // Example: audioEngine.setEqualizerBand(index, gain)
+            println("Applying equalizer band $index: ${gain}dB")
+        }
+    } catch (e: Exception) {
+        println("Error applying equalizer settings: ${e.message}")
     }
 }

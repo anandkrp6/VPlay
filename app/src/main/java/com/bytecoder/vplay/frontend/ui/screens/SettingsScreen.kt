@@ -1,5 +1,8 @@
 package com.bytecoder.vplay.frontend.ui.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,6 +66,7 @@ import androidx.compose.material.icons.filled.TextFormat
 import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled.VideoFile
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
@@ -70,6 +74,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
@@ -121,16 +126,34 @@ fun SettingsScreen(
     val defaultPlaybackSpeed by settingsViewModel.defaultPlaybackSpeed.collectAsState()
     val autoDownloadEnabled by settingsViewModel.autoDownloadEnabled.collectAsState()
     val analyticsEnabled by settingsViewModel.analyticsEnabled.collectAsState()
+    val downloadLocation by settingsViewModel.downloadLocation.collectAsState()
+    val locationServicesEnabled by settingsViewModel.locationServicesEnabled.collectAsState()
+    val historyTrackingEnabled by settingsViewModel.historyTrackingEnabled.collectAsState()
+    val usageAnalyticsEnabled by settingsViewModel.usageAnalyticsEnabled.collectAsState()
+    val debugModeEnabled by settingsViewModel.debugModeEnabled.collectAsState()
     
     var showThemeDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
     var showAudioQualityDialog by remember { mutableStateOf(false) }
     var showVideoQualityDialog by remember { mutableStateOf(false) }
+    var showDownloadLocationDialog by remember { mutableStateOf(false) }
+    var showBugReportDialog by remember { mutableStateOf(false) }
     
     var audioVolume by remember { mutableFloatStateOf(0.8f) }
     var crossfadeDuration by remember { mutableFloatStateOf(3f) }
     var bufferSize by remember { mutableFloatStateOf(50f) }
+
+    // Folder picker for download location
+    val folderPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocumentTree()
+    ) { uri: Uri? ->
+        uri?.let {
+            // Convert URI to a readable path for display
+            val displayPath = it.lastPathSegment?.replace("primary:", "Internal Storage/") ?: "Internal Storage/VPlay"
+            settingsViewModel.setDownloadLocation(displayPath)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -198,12 +221,24 @@ fun SettingsScreen(
                         onCheckedChange = { settingsViewModel.setAnimations(it) }
                     )
                     
+                    var showFontSizeDialog by remember { mutableStateOf(false) }
+                    
                     SettingsItem(
                         icon = Icons.Default.TextFormat,
                         title = "Font Size",
                         subtitle = "Medium",
-                        onClick = { /* TODO: Font size dialog */ }
+                        onClick = { showFontSizeDialog = true }
                     )
+                    
+                    if (showFontSizeDialog) {
+                        FontSizeDialog(
+                            onDismiss = { showFontSizeDialog = false },
+                            onSizeSelected = { size ->
+                                // Handle font size selection
+                                showFontSizeDialog = false
+                            }
+                        )
+                    }
                     
                     SettingsToggleItem(
                         icon = Icons.Default.FullscreenExit,
@@ -270,12 +305,25 @@ fun SettingsScreen(
                         onCheckedChange = { settingsViewModel.setHeadphoneDetection(it) }
                     )
                     
+                    var showPlaybackSpeedDialog by remember { mutableStateOf(false) }
+                    
                     SettingsItem(
                         icon = Icons.Default.Speed,
                         title = "Playback Speed",
                         subtitle = "${String.format("%.1f", defaultPlaybackSpeed)}x",
-                        onClick = { /* TODO: Playback speed dialog */ }
+                        onClick = { showPlaybackSpeedDialog = true }
                     )
+                    
+                    if (showPlaybackSpeedDialog) {
+                        PlaybackSpeedDialog(
+                            currentSpeed = defaultPlaybackSpeed,
+                            onDismiss = { showPlaybackSpeedDialog = false },
+                            onSpeedSelected = { speed ->
+                                settingsViewModel.setDefaultPlaybackSpeed(speed)
+                                showPlaybackSpeedDialog = false
+                            }
+                        )
+                    }
                     
                     SettingsToggleItem(
                         icon = Icons.Default.SkipNext,
@@ -403,8 +451,8 @@ fun SettingsScreen(
                     SettingsItem(
                         icon = Icons.Default.FolderOpen,
                         title = "Download Location",
-                        subtitle = "Internal Storage/VPlay",
-                        onClick = { /* TODO: Download location picker */ }
+                        subtitle = downloadLocation,
+                        onClick = { showDownloadLocationDialog = true }
                     )
                     
                     SettingsSliderItem(
@@ -449,19 +497,68 @@ fun SettingsScreen(
                         onCheckedChange = { /* TODO: Implement history toggle */ }
                     )
                     
+                    var showClearDataDialog by remember { mutableStateOf(false) }
+                    
                     SettingsItem(
                         icon = Icons.Default.DeleteForever,
                         title = "Clear All Data",
                         subtitle = "Reset app to factory defaults",
-                        onClick = { /* TODO: Clear all data dialog */ }
+                        onClick = { showClearDataDialog = true }
                     )
                     
+                    if (showClearDataDialog) {
+                        ClearDataDialog(
+                            onDismiss = { showClearDataDialog = false },
+                            onConfirm = {
+                                // Handle clearing all data
+                                settingsViewModel.clearAllData()
+                                showClearDataDialog = false
+                            }
+                        )
+                    }
+                    
+                }
+            }
+            
+            // Privacy & Data Section
+            item {
+                SettingsSection(title = "Privacy & Data") {
                     SettingsToggleItem(
                         icon = Icons.Default.LocationOn,
                         title = "Location Services",
                         subtitle = "For local music discovery",
-                        checked = false,
-                        onCheckedChange = { /* TODO: Implement location toggle */ }
+                        checked = locationServicesEnabled,
+                        onCheckedChange = { settingsViewModel.setLocationServices(it) }
+                    )
+                    
+                    SettingsToggleItem(
+                        icon = Icons.Default.History,
+                        title = "History Tracking",
+                        subtitle = "Save playback history and recommendations",
+                        checked = historyTrackingEnabled,
+                        onCheckedChange = { settingsViewModel.setHistoryTracking(it) }
+                    )
+                    
+                    SettingsToggleItem(
+                        icon = Icons.Default.Analytics,
+                        title = "Usage Analytics",
+                        subtitle = "Help improve the app with anonymous usage data",
+                        checked = usageAnalyticsEnabled,
+                        onCheckedChange = { settingsViewModel.setUsageAnalytics(it) }
+                    )
+                    
+                    SettingsItem(
+                        icon = Icons.Default.Policy,
+                        title = "Privacy Policy",
+                        subtitle = "View our privacy policy",
+                        onClick = { navController.navigate("privacy_policy") }
+                    )
+                    
+                    SettingsItem(
+                        icon = Icons.Default.Security,
+                        title = "Data & Privacy Settings",
+                        subtitle = "Manage your data preferences",
+                        onClick = { navController.navigate("data_privacy") }
                     )
                 }
             }
@@ -480,14 +577,14 @@ fun SettingsScreen(
                         icon = Icons.Default.Update,
                         title = "Check for Updates",
                         subtitle = "You're up to date",
-                        onClick = { /* TODO: Check for updates */ }
+                        onClick = { settingsViewModel.checkForUpdates() }
                     )
                     
                     SettingsItem(
                         icon = Icons.Default.BugReport,
                         title = "Report a Bug",
                         subtitle = "Help us improve VPlay",
-                        onClick = { /* TODO: Bug report */ }
+                        onClick = { showBugReportDialog = true }
                     )
                     
                     SettingsItem(
@@ -512,14 +609,14 @@ fun SettingsScreen(
                         icon = Icons.Default.Policy,
                         title = "Privacy Policy",
                         subtitle = "Learn how we protect your data",
-                        onClick = { /* TODO: Privacy policy */ }
+                        onClick = { navController.navigate("privacy_policy") }
                     )
                     
                     SettingsItem(
                         icon = Icons.Default.Code,
                         title = "Open Source Licenses",
                         subtitle = "View third-party licenses",
-                        onClick = { /* TODO: Open source licenses */ }
+                        onClick = { navController.navigate("licenses") }
                     )
                 }
             }
@@ -531,8 +628,8 @@ fun SettingsScreen(
                         icon = Icons.Default.DeveloperMode,
                         title = "Debug Mode",
                         subtitle = "Enable detailed logging",
-                        checked = false,
-                        onCheckedChange = { /* TODO: Implement debug mode */ }
+                        checked = debugModeEnabled,
+                        onCheckedChange = { settingsViewModel.setDebugMode(it) }
                     )
                     
                     SettingsItem(
@@ -613,6 +710,33 @@ fun SettingsScreen(
     if (showAboutDialog) {
         AboutDialog(
             onDismiss = { showAboutDialog = false }
+        )
+    }
+    
+    // Download Location Dialog
+    if (showDownloadLocationDialog) {
+        DownloadLocationDialog(
+            currentLocation = downloadLocation,
+            onLocationSelected = { location ->
+                settingsViewModel.setDownloadLocation(location)
+                showDownloadLocationDialog = false
+            },
+            onBrowseClicked = {
+                folderPicker.launch(null)
+                showDownloadLocationDialog = false
+            },
+            onDismiss = { showDownloadLocationDialog = false }
+        )
+    }
+    
+    // Bug Report Dialog
+    if (showBugReportDialog) {
+        BugReportDialog(
+            onSubmit = { description, email ->
+                settingsViewModel.submitBugReport(description, email)
+                showBugReportDialog = false
+            },
+            onDismiss = { showBugReportDialog = false }
         )
     }
 }
@@ -1057,6 +1181,363 @@ fun AboutDialog(
         confirmButton = {
             TextButton(onClick = onDismiss) {
                 Text("OK")
+            }
+        }
+    )
+}
+
+@Composable
+private fun FontSizeDialog(
+    onDismiss: () -> Unit,
+    onSizeSelected: (String) -> Unit
+) {
+    val fontSizes = listOf("Small", "Medium", "Large", "Extra Large")
+    var selectedSize by remember { mutableStateOf("Medium") }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("Font Size")
+        },
+        text = {
+            Column {
+                fontSizes.forEach { size ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = selectedSize == size,
+                            onClick = { selectedSize = size }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = size,
+                            style = when (size) {
+                                "Small" -> MaterialTheme.typography.bodySmall
+                                "Medium" -> MaterialTheme.typography.bodyMedium
+                                "Large" -> MaterialTheme.typography.bodyLarge
+                                "Extra Large" -> MaterialTheme.typography.headlineSmall
+                                else -> MaterialTheme.typography.bodyMedium
+                            }
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onSizeSelected(selectedSize) }
+            ) {
+                Text("Apply")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+private fun PlaybackSpeedDialog(
+    currentSpeed: Float,
+    onDismiss: () -> Unit,
+    onSpeedSelected: (Float) -> Unit
+) {
+    val speeds = listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f)
+    var selectedSpeed by remember { mutableStateOf(currentSpeed) }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("Playback Speed")
+        },
+        text = {
+            Column {
+                speeds.forEach { speed ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = selectedSpeed == speed,
+                            onClick = { selectedSpeed = speed }
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "${String.format("%.2f", speed)}x",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        if (speed == 1.0f) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "(Normal)",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onSpeedSelected(selectedSpeed) }
+            ) {
+                Text("Apply")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+private fun ClearDataDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text("Clear All Data")
+        },
+        text = {
+            Column {
+                Text(
+                    text = "This will permanently delete:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                listOf(
+                    "• All playlists and favorites",
+                    "• Listening history",
+                    "• Downloaded content",
+                    "• App settings and preferences",
+                    "• Cache and temporary files"
+                ).forEach { item ->
+                    Text(
+                        text = item,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(vertical = 2.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "This action cannot be undone.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+private fun DownloadLocationDialog(
+    currentLocation: String,
+    onLocationSelected: (String) -> Unit,
+    onBrowseClicked: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    val predefinedLocations = listOf(
+        "Internal Storage/VPlay",
+        "Internal Storage/Music",
+        "Internal Storage/Downloads",
+        "SD Card/VPlay" // If available
+    )
+    
+    var selectedLocation by remember { mutableStateOf(currentLocation) }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Download Location",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column {
+                Text(
+                    text = "Choose where to save downloaded media files:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Predefined locations
+                predefinedLocations.forEach { location ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .selectable(
+                                selected = selectedLocation == location,
+                                onClick = { selectedLocation = location },
+                                role = Role.RadioButton
+                            )
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = selectedLocation == location,
+                            onClick = { selectedLocation = location }
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = location.substringAfterLast('/'),
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = location,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Browse for custom location
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(
+                        onClick = onBrowseClicked,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.FolderOpen,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Browse for custom location...")
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onLocationSelected(selectedLocation) }
+            ) {
+                Text("Apply")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+private fun BugReportDialog(
+    onSubmit: (String, String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var description by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Report a Bug",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column {
+                Text(
+                    text = "Help us improve VPlay by reporting any issues you've encountered:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Describe the issue") },
+                    placeholder = { Text("Please provide details about the bug...") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp),
+                    maxLines = 5
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Email (optional)") },
+                    placeholder = { Text("your.email@example.com") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "We'll automatically include device and app information to help diagnose the issue.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { 
+                    if (description.isNotBlank()) {
+                        onSubmit(description, email)
+                    }
+                },
+                enabled = description.isNotBlank()
+            ) {
+                Text("Submit Report")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
             }
         }
     )

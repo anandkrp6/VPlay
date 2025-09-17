@@ -41,6 +41,11 @@ fun MiniPlayer(
     
     val currentItem = if (currentIndex in queue.indices) queue[currentIndex] else null
     
+    // Sample lyrics for demo - in real app this would come from the media item
+    val currentLyric = remember(position) {
+        getCurrentLyric(position)
+    }
+    
     // Only show mini player when media is playing or paused
     AnimatedVisibility(
         visible = currentItem != null,
@@ -60,6 +65,43 @@ fun MiniPlayer(
                     color = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
                     trackColor = Color.Transparent
                 )
+            }
+            
+            // Lyrics preview (when available)
+            AnimatedVisibility(
+                visible = currentLyric?.isNotEmpty() == true
+            ) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Subtitles,
+                            contentDescription = "Lyrics",
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = currentLyric ?: "",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
             }
             
             // Main mini player content
@@ -220,4 +262,35 @@ private fun AnimatedEqualizer(
             )
         }
     }
+}
+
+// Sample function to get current lyric based on playback position
+// In a real app, this would be integrated with the lyrics data from the media item
+private fun getCurrentLyric(position: Long): String? {
+    val sampleLyrics = listOf(
+        0L to "Welcome to the rhythm of the night",
+        3000L to "Where the music takes you higher",
+        6000L to "Dancing under neon lights",
+        9000L to "Feel the beat that never tires",
+        15000L to "Verse one begins with gentle grace",
+        18000L to "Melodies that touch your soul",
+        21000L to "Every note finds its place",
+        24000L to "In this story we control",
+        30000L to "Chorus time to sing along",
+        33000L to "Raise your voice up to the sky",
+        36000L to "This is where we all belong",
+        39000L to "Let the music amplify",
+        45000L to "Bridge the gap between the worlds",
+        48000L to "Where reality meets dreams",
+        51000L to "See how every note unfurls",
+        54000L to "Into something more it seems",
+        60000L to "Final chorus brings us home",
+        63000L to "To the place where hearts unite",
+        66000L to "No more need to search or roam",
+        69000L to "We have found our guiding light"
+    )
+    
+    return sampleLyrics
+        .lastOrNull { it.first <= position }
+        ?.second
 }

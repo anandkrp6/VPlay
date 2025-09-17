@@ -112,7 +112,12 @@ fun HistoryScreen(
                     HistoryItemCard(
                         item = item,
                         onPlay = {
-                            // TODO: Play the media item
+                            // Navigate to appropriate player based on media type
+                            if (item.isVideo) {
+                                navController.navigate("video_player/${item.id}")
+                            } else {
+                                navController.navigate("audio_player/${item.id}")
+                            }
                         },
                         onRemove = {
                             historyViewModel.removeFromHistory(item.id)

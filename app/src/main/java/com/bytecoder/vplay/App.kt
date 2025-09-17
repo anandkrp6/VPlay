@@ -104,13 +104,18 @@ fun VPlayApp(
                     )
                 },
                 navigationIcon = {
-                    // App logo on the left (24dp height as per plan)
-                    Icon(
-                        imageVector = Icons.Filled.MusicNote, // TODO: Replace with actual vPlay logo
-                        contentDescription = "vPlay",
+                    // vPlay logo with play icon and custom styling
+                    Box(
                         modifier = Modifier.size(24.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.PlayCircleFilled,
+                            contentDescription = "vPlay",
+                            modifier = Modifier.size(24.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 },
                 actions = {
                     // Search icon
@@ -123,13 +128,54 @@ fun VPlayApp(
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                    // 3-dot overflow menu
-                    IconButton(onClick = { /* TODO: Implement overflow menu */ }) {
-                        Icon(
-                            imageVector = Icons.Filled.MoreVert,
-                            contentDescription = "More options",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
+                    
+                    // Overflow menu with dropdown
+                    var showOverflowMenu by remember { mutableStateOf(false) }
+                    
+                    Box {
+                        IconButton(onClick = { showOverflowMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Filled.MoreVert,
+                                contentDescription = "More options",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        
+                        DropdownMenu(
+                            expanded = showOverflowMenu,
+                            onDismissRequest = { showOverflowMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Settings") },
+                                onClick = {
+                                    showOverflowMenu = false
+                                    navController.navigate("settings")
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.Settings, contentDescription = null)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("History") },
+                                onClick = {
+                                    showOverflowMenu = false
+                                    navController.navigate("history")
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.History, contentDescription = null)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("About") },
+                                onClick = {
+                                    showOverflowMenu = false
+                                    navController.navigate("about")
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.Info, contentDescription = null)
+                                }
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -270,6 +316,30 @@ fun VPlayApp(
                     navController = navController
                 )
             }
+            
+            // Legal and privacy screens
+            composable("privacy_policy") {
+                PrivacyPolicyScreen(navController = navController)
+            }
+            composable("data_privacy") {
+                DataPrivacyScreen(navController = navController)
+            }
+            composable("licenses") {
+                LicensesScreen(navController = navController)
+            }
+            
+            // Lyrics screen
+            composable(
+                route = "lyrics/{mediaId}",
+                arguments = listOf(navArgument("mediaId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val mediaId = backStackEntry.arguments?.getString("mediaId") ?: ""
+                LyricsScreen(
+                    mediaId = mediaId,
+                    navController = navController,
+                    queueViewModel = queueViewModel
+                )
+            }
         }
         
         // Mini-player overlay
@@ -279,7 +349,9 @@ fun VPlayApp(
                 // Navigate to dedicated queue screen
                 navController.navigate(VPlayScreen.Queue.route)
             },
-            onRequestNotificationPermission = { /* TODO: Handle permissions */ },
+            onRequestNotificationPermission = { 
+                navController.navigate("permissions")
+            },
             modifier = Modifier.align(Alignment.BottomCenter)
         )
         }

@@ -145,7 +145,8 @@ fun EnhancedMusicScreen(
                     },
                     onTrackFavorite = { trackId ->
                         musicLibraryViewModel.toggleFavorite(trackId)
-                    }
+                    },
+                    navController = navController
                 )
                 TabMode.PLAYLISTS -> MusicPlaylistsContent(
                     playlists = playlists,
@@ -189,7 +190,8 @@ private fun MusicLibraryContent(
     artists: List<MusicArtist>,
     isLoading: Boolean,
     onTrackClick: (MusicTrack) -> Unit,
-    onTrackFavorite: (String) -> Unit
+    onTrackFavorite: (String) -> Unit,
+    navController: NavController
 ) {
     var selectedSubTab by remember { mutableIntStateOf(0) }
     
@@ -220,8 +222,8 @@ private fun MusicLibraryContent(
         
         when (selectedSubTab) {
             0 -> TracksContent(tracks, onTrackClick, onTrackFavorite)
-            1 -> AlbumsContent(albums)
-            2 -> ArtistsContent(artists)
+            1 -> AlbumsContent(albums, navController)
+            2 -> ArtistsContent(artists, navController)
         }
     }
 }
@@ -256,7 +258,7 @@ private fun TracksContent(
 }
 
 @Composable
-private fun AlbumsContent(albums: List<MusicAlbum>) {
+private fun AlbumsContent(albums: List<MusicAlbum>, navController: NavController) {
     if (albums.isEmpty()) {
         EmptyState(
             icon = Icons.Default.Album,
@@ -272,14 +274,16 @@ private fun AlbumsContent(albums: List<MusicAlbum>) {
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(albums) { album ->
-                AlbumItem(album = album, onClick = { /* TODO: Navigate to album */ })
+                AlbumItem(album = album, onClick = { 
+                    navController.navigate("album_detail/${album.id}")
+                })
             }
         }
     }
 }
 
 @Composable
-private fun ArtistsContent(artists: List<MusicArtist>) {
+private fun ArtistsContent(artists: List<MusicArtist>, navController: NavController) {
     if (artists.isEmpty()) {
         EmptyState(
             icon = Icons.Default.Person,
@@ -293,7 +297,9 @@ private fun ArtistsContent(artists: List<MusicArtist>) {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(artists) { artist ->
-                ArtistItem(artist = artist, onClick = { /* TODO: Navigate to artist */ })
+                ArtistItem(artist = artist, onClick = { 
+                    navController.navigate("artist_detail/${artist.name}")
+                })
             }
         }
     }

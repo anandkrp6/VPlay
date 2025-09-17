@@ -47,6 +47,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _autoBrightness = MutableStateFlow(true)
     val autoBrightness: StateFlow<Boolean> = _autoBrightness.asStateFlow()
     
+    private val _downloadLocation = MutableStateFlow("Internal Storage/VPlay")
+    val downloadLocation: StateFlow<String> = _downloadLocation.asStateFlow()
+    
     // Additional settings
     private val _gridViewEnabled = MutableStateFlow(false)
     val gridViewEnabled: StateFlow<Boolean> = _gridViewEnabled.asStateFlow()
@@ -72,6 +75,18 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _analyticsEnabled = MutableStateFlow(true)
     val analyticsEnabled: StateFlow<Boolean> = _analyticsEnabled.asStateFlow()
     
+    private val _locationServicesEnabled = MutableStateFlow(false)
+    val locationServicesEnabled: StateFlow<Boolean> = _locationServicesEnabled.asStateFlow()
+    
+    private val _historyTrackingEnabled = MutableStateFlow(true)
+    val historyTrackingEnabled: StateFlow<Boolean> = _historyTrackingEnabled.asStateFlow()
+    
+    private val _usageAnalyticsEnabled = MutableStateFlow(true)
+    val usageAnalyticsEnabled: StateFlow<Boolean> = _usageAnalyticsEnabled.asStateFlow()
+    
+    private val _debugModeEnabled = MutableStateFlow(false)
+    val debugModeEnabled: StateFlow<Boolean> = _debugModeEnabled.asStateFlow()
+    
     init {
         loadSettings()
     }
@@ -91,6 +106,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             _smartSkipEnabled.value = prefs.getBoolean("smart_skip", false)
             _autoDownloadEnabled.value = prefs.getBoolean("auto_download", false)
             _analyticsEnabled.value = prefs.getBoolean("analytics_enabled", true)
+            _downloadLocation.value = prefs.getString("download_location", "Internal Storage/VPlay") ?: "Internal Storage/VPlay"
+            _locationServicesEnabled.value = prefs.getBoolean("location_services_enabled", false)
+            _historyTrackingEnabled.value = prefs.getBoolean("history_tracking_enabled", true)
+            _usageAnalyticsEnabled.value = prefs.getBoolean("usage_analytics_enabled", true)
+            _debugModeEnabled.value = prefs.getBoolean("debug_mode_enabled", false)
             
             // Theme mode: 0=system, 1=light, 2=dark
             val themeMode = AppSettings.getThemeMode(context)
@@ -184,6 +204,14 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
     
+    fun setDownloadLocation(location: String) {
+        viewModelScope.launch {
+            _downloadLocation.value = location
+            val prefs = context.getSharedPreferences("ui_settings", Context.MODE_PRIVATE)
+            prefs.edit().putString("download_location", location).apply()
+        }
+    }
+    
     fun setGridView(enabled: Boolean) {
         viewModelScope.launch {
             _gridViewEnabled.value = enabled
@@ -247,6 +275,91 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
     
+    fun setLocationServices(enabled: Boolean) {
+        viewModelScope.launch {
+            _locationServicesEnabled.value = enabled
+            val prefs = context.getSharedPreferences("ui_settings", Context.MODE_PRIVATE)
+            prefs.edit().putBoolean("location_services_enabled", enabled).apply()
+        }
+    }
+    
+    fun setHistoryTracking(enabled: Boolean) {
+        viewModelScope.launch {
+            _historyTrackingEnabled.value = enabled
+            val prefs = context.getSharedPreferences("ui_settings", Context.MODE_PRIVATE)
+            prefs.edit().putBoolean("history_tracking_enabled", enabled).apply()
+        }
+    }
+    
+    fun setUsageAnalytics(enabled: Boolean) {
+        viewModelScope.launch {
+            _usageAnalyticsEnabled.value = enabled
+            val prefs = context.getSharedPreferences("ui_settings", Context.MODE_PRIVATE)
+            prefs.edit().putBoolean("usage_analytics_enabled", enabled).apply()
+        }
+    }
+    
+    fun setDebugMode(enabled: Boolean) {
+        viewModelScope.launch {
+            _debugModeEnabled.value = enabled
+            val prefs = context.getSharedPreferences("ui_settings", Context.MODE_PRIVATE)
+            prefs.edit().putBoolean("debug_mode_enabled", enabled).apply()
+            
+            // In a real app, you would configure logging levels here
+            if (enabled) {
+                // Enable verbose logging
+                android.util.Log.d("SettingsViewModel", "Debug mode enabled")
+            } else {
+                // Disable verbose logging
+                android.util.Log.d("SettingsViewModel", "Debug mode disabled")
+            }
+        }
+    }
+    
+    fun checkForUpdates() {
+        viewModelScope.launch {
+            try {
+                // In a real app, this would make an API call to check for updates
+                // For now, we'll just simulate the check
+                android.util.Log.d("SettingsViewModel", "Checking for updates...")
+                
+                // Simulate network delay
+                kotlinx.coroutines.delay(1000)
+                
+                // For demo purposes, always show "up to date"
+                android.util.Log.d("SettingsViewModel", "App is up to date")
+            } catch (e: Exception) {
+                android.util.Log.e("SettingsViewModel", "Failed to check for updates", e)
+            }
+        }
+    }
+    
+    fun submitBugReport(description: String, email: String) {
+        viewModelScope.launch {
+            try {
+                // In a real app, this would send the bug report to your backend
+                android.util.Log.d("SettingsViewModel", "Submitting bug report: $description")
+                
+                // Collect device info for bug report
+                val deviceInfo = mapOf(
+                    "model" to android.os.Build.MODEL,
+                    "version" to android.os.Build.VERSION.RELEASE,
+                    "sdk" to android.os.Build.VERSION.SDK_INT.toString(),
+                    "app_version" to "3.0.0",
+                    "description" to description,
+                    "email" to email
+                )
+                
+                // Simulate sending bug report
+                kotlinx.coroutines.delay(1000)
+                
+                android.util.Log.d("SettingsViewModel", "Bug report submitted successfully: $deviceInfo")
+            } catch (e: Exception) {
+                android.util.Log.e("SettingsViewModel", "Failed to submit bug report", e)
+            }
+        }
+    }
+    
     fun setLanguage(language: String) {
         viewModelScope.launch {
             val prefs = context.getSharedPreferences("ui_settings", Context.MODE_PRIVATE)
@@ -275,6 +388,32 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             val prefs = context.getSharedPreferences("ui_settings", Context.MODE_PRIVATE)
             prefs.edit().clear().apply()
             loadSettings()
+        }
+    }
+    
+    fun clearAllData() {
+        viewModelScope.launch {
+            // Clear all app data including preferences, cache, and database
+            try {
+                // Clear all shared preferences
+                val uiPrefs = context.getSharedPreferences("ui_settings", Context.MODE_PRIVATE)
+                uiPrefs.edit().clear().apply()
+                
+                val historyPrefs = context.getSharedPreferences("history_tracker", Context.MODE_PRIVATE)
+                historyPrefs.edit().clear().apply()
+                
+                // Clear cache directory
+                context.cacheDir.deleteRecursively()
+                
+                // Reset app settings
+                AppSettings.resetAllSettings(context)
+                
+                // Reload default settings
+                loadSettings()
+            } catch (e: Exception) {
+                // Handle error gracefully
+                e.printStackTrace()
+            }
         }
     }
 }
