@@ -74,6 +74,16 @@
 
     <style name="Theme.VPlay" parent="Base.Theme.VPlay" />
     
+    <!-- NoActionBar theme for splash screen -->
+    <style name="Theme.VPlay.NoActionBar" parent="Base.Theme.VPlay">
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+    
     <!-- Player Theme for immersive video playback -->
     <style name="Theme.VPlay.Player" parent="Theme.VPlay">
         <item name="android:windowFullscreen">true</item>

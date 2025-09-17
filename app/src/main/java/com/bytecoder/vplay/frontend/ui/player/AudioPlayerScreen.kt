@@ -32,6 +32,24 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.automirrored.filled.VolumeDown
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Equalizer
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Repeat
+import androidx.compose.material.icons.filled.RepeatOne
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
@@ -80,6 +98,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -143,7 +162,7 @@ fun AudioPlayerScreen(
                         }
                     },
                     actions = {
-                        IconButton(onClick = { showQueue = !showQueue }) {
+                        IconButton(onClick = { navController.navigate("queue") }) {
                             Icon(
                                 Icons.AutoMirrored.Filled.QueueMusic, 
                                 contentDescription = "Queue",
@@ -188,252 +207,395 @@ fun AudioPlayerScreen(
                     ) {
                         Spacer(modifier = Modifier.height(32.dp))
                         
-                        // Album Art with rotation animation when playing
-                        Box(
-                            modifier = Modifier
-                                .size(280.dp)
-                                .clip(RoundedCornerShape(20.dp))
-                                .rotate(if (isPlaying) rotation else 0f),
-                            contentAlignment = Alignment.Center
+                        // Enhanced Album Art with improved styling
+                        Card(
+                            modifier = Modifier.size(320.dp),
+                            shape = RoundedCornerShape(24.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                         ) {
-                            if (media.thumbnailPath?.isNotEmpty() == true) {
-                                AsyncImage(
-                                    model = media.thumbnailPath,
-                                    contentDescription = media.title,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else {
-                                Surface(
-                                    modifier = Modifier.fillMaxSize(),
-                                    color = MaterialTheme.colorScheme.surfaceVariant,
-                                    shape = RoundedCornerShape(20.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.QueueMusic,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(80.dp),
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                            
-                            // Gradient overlay for better text visibility
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .background(
-                                        Brush.verticalGradient(
-                                            colors = listOf(
-                                                Color.Transparent,
-                                                Color.Black.copy(alpha = 0.1f)
-                                            ),
-                                            startY = 0f,
-                                            endY = 1000f
-                                        )
+                                    .rotate(if (isPlaying) rotation else 0f),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (media.thumbnailPath?.isNotEmpty() == true) {
+                                    AsyncImage(
+                                        model = media.thumbnailPath,
+                                        contentDescription = media.title,
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
                                     )
-                            )
+                                } else {
+                                    // Enhanced placeholder with gradient background
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(
+                                                Brush.radialGradient(
+                                                    colors = listOf(
+                                                        MaterialTheme.colorScheme.primaryContainer,
+                                                        MaterialTheme.colorScheme.surfaceVariant
+                                                    ),
+                                                    radius = 400f
+                                                )
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.MusicNote,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(96.dp),
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+                                            Text(
+                                                text = "VPlay",
+                                                style = MaterialTheme.typography.titleLarge,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.padding(top = 8.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                                
+                                // Subtle overlay for better contrast
+                                if (media.thumbnailPath?.isNotEmpty() == true) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(
+                                                Brush.verticalGradient(
+                                                    colors = listOf(
+                                                        Color.Transparent,
+                                                        Color.Black.copy(alpha = 0.05f)
+                                                    ),
+                                                    startY = 0f,
+                                                    endY = 1000f
+                                                )
+                                            )
+                                    )
+                                }
+                            }
                         }
                         
-                        Spacer(modifier = Modifier.height(32.dp))
+                        Spacer(modifier = Modifier.height(40.dp))
                         
-                        // Track Info
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
+                        // Enhanced Track Info with better typography
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer
+                            ),
+                            shape = RoundedCornerShape(16.dp)
                         ) {
-                            Text(
-                                text = media.title,
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            
-                            media.subtitle?.let { artist ->
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.padding(20.dp)
+                            ) {
                                 Text(
-                                    text = artist,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    text = media.title,
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    textAlign = TextAlign.Center,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                
+                                media.subtitle?.let { artist ->
+                                    Text(
+                                        text = artist,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.padding(top = 8.dp)
+                                    )
+                                }
+                                
+                                // Album info if available
+                                Text(
+                                    text = "Unknown Album", // TODO: Add album field to MediaItemModel
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.padding(top = 8.dp)
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(top = 4.dp)
                                 )
                             }
                         }
                         
-                        Spacer(modifier = Modifier.height(32.dp))
+                        Spacer(modifier = Modifier.height(36.dp))
                         
-                        // Progress Bar
-                        Column {
-                            LinearProgressIndicator(
-                                progress = { if (duration > 0) (currentPosition.toFloat() / duration.toFloat()) else 0f },
+                        // Enhanced Progress Bar with scrubbing
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(20.dp)
+                            ) {
+                                // Seekable Slider instead of just progress indicator
+                                Slider(
+                                    value = if (duration > 0) (currentPosition.toFloat() / duration.toFloat()) else 0f,
+                                    onValueChange = { progress ->
+                                        val newPosition = (progress * duration).toLong()
+                                        queueViewModel.seekTo(newPosition)
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = SliderDefaults.colors(
+                                        thumbColor = MaterialTheme.colorScheme.primary,
+                                        activeTrackColor = MaterialTheme.colorScheme.primary,
+                                        inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                                    )
+                                )
+                                
+                                // Enhanced time labels with better spacing
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = formatTime(currentPosition),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Text(
+                                        text = formatTime(duration),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(36.dp))
+                        
+                        // Enhanced Main Controls with better design
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer
+                            ),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(6.dp)
-                                    .clip(RoundedCornerShape(3.dp)),
-                                color = MaterialTheme.colorScheme.primary,
-                                trackColor = MaterialTheme.colorScheme.surfaceVariant
-                            )
-                            
-                            Spacer(modifier = Modifier.height(8.dp))
-                            
-                            // Time labels
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                    .padding(24.dp),
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = formatTime(currentPosition),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = formatTime(duration),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                        
-                        Spacer(modifier = Modifier.height(32.dp))
-                        
-                        // Main Controls
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Shuffle
-                            IconButton(
-                                onClick = { 
-                                    isShuffleEnabled = !isShuffleEnabled
-                                    queueViewModel.setShuffleMode(isShuffleEnabled)
-                                }
-                            ) {
-                                Icon(
-                                    Icons.Default.Shuffle, 
-                                    contentDescription = "Shuffle",
-                                    tint = if (isShuffleEnabled) MaterialTheme.colorScheme.primary 
-                                           else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            
-                            // Previous
-                            IconButton(
-                                onClick = { queueViewModel.skipToPrevious() },
-                                modifier = Modifier.size(48.dp)
-                            ) {
-                                Icon(
-                                    Icons.Default.SkipPrevious, 
-                                    contentDescription = "Previous",
-                                    modifier = Modifier.size(32.dp)
-                                )
-                            }
-                            
-                            // Play/Pause
-                            FilledIconButton(
-                                onClick = { 
-                                    if (isPlaying) queueViewModel.pause() 
-                                    else queueViewModel.play()
-                                },
-                                modifier = Modifier.size(72.dp),
-                                colors = IconButtonDefaults.filledIconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary
-                                )
-                            ) {
-                                Icon(
-                                    if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                    contentDescription = if (isPlaying) "Pause" else "Play",
-                                    modifier = Modifier.size(36.dp),
-                                    tint = MaterialTheme.colorScheme.onPrimary
-                                )
-                            }
-                            
-                            // Next
-                            IconButton(
-                                onClick = { queueViewModel.skipToNext() },
-                                modifier = Modifier.size(48.dp)
-                            ) {
-                                Icon(
-                                    Icons.Default.SkipNext, 
-                                    contentDescription = "Next",
-                                    modifier = Modifier.size(32.dp)
-                                )
-                            }
-                            
-                            // Repeat
-                            IconButton(
-                                onClick = { 
-                                    repeatMode = (repeatMode + 1) % 3
-                                    queueViewModel.setRepeatMode(repeatMode)
-                                }
-                            ) {
-                                Icon(
-                                    when (repeatMode) {
-                                        1 -> Icons.Default.Repeat
-                                        2 -> Icons.Default.RepeatOne
-                                        else -> Icons.Default.Repeat
+                                // Shuffle with enhanced styling
+                                IconButton(
+                                    onClick = { 
+                                        isShuffleEnabled = !isShuffleEnabled
+                                        queueViewModel.setShuffleMode(isShuffleEnabled)
                                     },
-                                    contentDescription = "Repeat",
-                                    tint = if (repeatMode > 0) MaterialTheme.colorScheme.primary 
-                                           else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                    modifier = Modifier.size(48.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Shuffle, 
+                                        contentDescription = "Shuffle",
+                                        tint = if (isShuffleEnabled) MaterialTheme.colorScheme.primary 
+                                               else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
+                                
+                                // Previous with larger size
+                                FilledIconButton(
+                                    onClick = { queueViewModel.skipToPrevious() },
+                                    modifier = Modifier.size(56.dp),
+                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
+                                ) {
+                                    Icon(
+                                        Icons.Default.SkipPrevious, 
+                                        contentDescription = "Previous",
+                                        modifier = Modifier.size(36.dp)
+                                    )
+                                }
+                                
+                                // Enhanced Play/Pause button (more prominent)
+                                FilledIconButton(
+                                    onClick = { 
+                                        if (isPlaying) queueViewModel.pause() 
+                                        else queueViewModel.play()
+                                    },
+                                    modifier = Modifier.size(80.dp),
+                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                ) {
+                                    Icon(
+                                        if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                        contentDescription = if (isPlaying) "Pause" else "Play",
+                                        modifier = Modifier.size(40.dp)
+                                    )
+                                }
+                                
+                                // Next with larger size
+                                FilledIconButton(
+                                    onClick = { queueViewModel.skipToNext() },
+                                    modifier = Modifier.size(56.dp),
+                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                    )
+                                ) {
+                                    Icon(
+                                        Icons.Default.SkipNext, 
+                                        contentDescription = "Next",
+                                        modifier = Modifier.size(36.dp)
+                                    )
+                                }
+                                
+                                // Repeat with enhanced styling
+                                IconButton(
+                                    onClick = { 
+                                        repeatMode = (repeatMode + 1) % 3
+                                        queueViewModel.setRepeatMode(repeatMode)
+                                    },
+                                    modifier = Modifier.size(48.dp)
+                                ) {
+                                    Icon(
+                                        when (repeatMode) {
+                                            1 -> Icons.Default.Repeat
+                                            2 -> Icons.Default.RepeatOne
+                                            else -> Icons.Default.Repeat
+                                        },
+                                        contentDescription = "Repeat",
+                                        tint = if (repeatMode > 0) MaterialTheme.colorScheme.primary 
+                                               else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                }
                             }
                         }
                         
                         Spacer(modifier = Modifier.height(24.dp))
                         
-                        // Secondary Controls
-                        Row(
+                        // Enhanced Secondary Controls with additional features
+                        Card(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer
+                            ),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
-                            // Favorite
-                            IconButton(
-                                onClick = { 
-                                    isFavorite = !isFavorite
-                                    // TODO: Update favorite status in database
+                            Column(
+                                modifier = Modifier.padding(20.dp)
+                            ) {
+                                // Top row: Favorite, Share, More options
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    // Favorite
+                                    IconButton(
+                                        onClick = { 
+                                            isFavorite = !isFavorite
+                                            // TODO: Update favorite status in database
+                                        }
+                                    ) {
+                                        Icon(
+                                            if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                            contentDescription = "Favorite",
+                                            tint = if (isFavorite) Color.Red else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(28.dp)
+                                        )
+                                    }
+                                    
+                                    // Share
+                                    IconButton(
+                                        onClick = { /* TODO: Implement share functionality */ }
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Share,
+                                            contentDescription = "Share",
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(28.dp)
+                                        )
+                                    }
+                                    
+                                    // Equalizer
+                                    IconButton(
+                                        onClick = { /* TODO: Open equalizer */ }
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Equalizer,
+                                            contentDescription = "Equalizer",
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(28.dp)
+                                        )
+                                    }
+                                    
+                                    // Lyrics (placeholder for future implementation)
+                                    IconButton(
+                                        onClick = { /* TODO: Show lyrics */ }
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Subtitles,
+                                            contentDescription = "Lyrics",
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(28.dp)
+                                        )
+                                    }
                                 }
-                            ) {
-                                Icon(
-                                    if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                    contentDescription = "Favorite",
-                                    tint = if (isFavorite) Color.Red else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            
-                            // Volume Control
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Icon(
-                                    Icons.AutoMirrored.Filled.VolumeDown,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
                                 
-                                Slider(
-                                    value = volume,
-                                    onValueChange = { 
-                                        volume = it
-                                        audioPlayerViewModel.setVolume(it)
-                                    },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .padding(horizontal = 8.dp),
-                                    colors = SliderDefaults.colors(
-                                        thumbColor = MaterialTheme.colorScheme.primary,
-                                        activeTrackColor = MaterialTheme.colorScheme.primary
+                                Spacer(modifier = Modifier.height(16.dp))
+                                
+                                // Volume Control with enhanced design
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.VolumeDown,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(24.dp)
                                     )
-                                )
-                                
-                                Icon(
-                                    Icons.AutoMirrored.Filled.VolumeUp,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                    
+                                    Slider(
+                                        value = volume,
+                                        onValueChange = { 
+                                            volume = it
+                                            audioPlayerViewModel.setVolume(it)
+                                        },
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .padding(horizontal = 12.dp),
+                                        colors = SliderDefaults.colors(
+                                            thumbColor = MaterialTheme.colorScheme.primary,
+                                            activeTrackColor = MaterialTheme.colorScheme.primary,
+                                            inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                                        )
+                                    )
+                                    
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.VolumeUp,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
                             }
                         }
                     }
@@ -487,85 +649,151 @@ fun QueueBottomSheet(
         }
     }
     
-    Column(
-        modifier = modifier.padding(16.dp)
+    Surface(
+        modifier = modifier,
+        color = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
     ) {
-        Text(
-            text = "Up Next",
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-        
-        LazyColumn(
-            state = listState,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        Column(
+            modifier = Modifier.padding(20.dp)
         ) {
-            items(queue.size) { index ->
-                val media = queue[index]
-                Card(
-                    onClick = { onTrackSelected(index) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (index == currentIndex) 
-                            MaterialTheme.colorScheme.primaryContainer
-                        else MaterialTheme.colorScheme.surface
-                    ),
-                    elevation = CardDefaults.cardElevation(
-                        defaultElevation = if (index == currentIndex) 4.dp else 1.dp
+            // Enhanced header with queue info
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Up Next",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    Text(
+                        text = "${queue.size} songs",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                
+                // Queue actions
+                Row {
+                    IconButton(
+                        onClick = { /* TODO: Shuffle queue */ }
                     ) {
-                        // Track number or now playing indicator
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(
-                                    if (index == currentIndex) 
-                                        MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.surfaceVariant
-                                ),
-                            contentAlignment = Alignment.Center
+                        Icon(
+                            Icons.Default.Shuffle,
+                            contentDescription = "Shuffle Queue",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    IconButton(
+                        onClick = { /* TODO: Clear queue */ }
+                    ) {
+                        Icon(
+                            Icons.Default.Clear,
+                            contentDescription = "Clear Queue",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            LazyColumn(
+                state = listState,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(queue.size) { index ->
+                    val media = queue[index]
+                    Card(
+                        onClick = { onTrackSelected(index) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (index == currentIndex) 
+                                MaterialTheme.colorScheme.primaryContainer
+                            else MaterialTheme.colorScheme.surfaceContainer
+                        ),
+                        elevation = CardDefaults.cardElevation(
+                            defaultElevation = if (index == currentIndex) 6.dp else 2.dp
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            if (index == currentIndex) {
-                                Icon(
-                                    Icons.Default.PlayArrow,
-                                    contentDescription = "Now Playing",
-                                    tint = MaterialTheme.colorScheme.onPrimary,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            } else {
-                                Text(
-                                    text = "${index + 1}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                            // Enhanced track indicator
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(
+                                        if (index == currentIndex) 
+                                            MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.surfaceVariant
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (index == currentIndex) {
+                                    Icon(
+                                        Icons.Default.PlayArrow,
+                                        contentDescription = "Now Playing",
+                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                } else {
+                                    Text(
+                                        text = "${index + 1}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
                             }
-                        }
-                        
-                        Spacer(modifier = Modifier.width(12.dp))
-                        
-                        // Track info
-                        Column(
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                text = media.title,
-                                style = MaterialTheme.typography.bodyMedium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                fontWeight = if (index == currentIndex) FontWeight.Bold else FontWeight.Normal
-                            )
-                            media.subtitle?.let { artist ->
+                            
+                            Spacer(modifier = Modifier.width(16.dp))
+                            
+                            // Enhanced track info
+                            Column(
+                                modifier = Modifier.weight(1f)
+                            ) {
                                 Text(
-                                    text = artist,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    text = media.title,
+                                    style = MaterialTheme.typography.bodyLarge,
                                     maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    overflow = TextOverflow.Ellipsis,
+                                    fontWeight = if (index == currentIndex) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (index == currentIndex) 
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else MaterialTheme.colorScheme.onSurface
+                                )
+                                media.subtitle?.let { artist ->
+                                    Text(
+                                        text = artist,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = if (index == currentIndex)
+                                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.padding(top = 2.dp)
+                                    )
+                                }
+                            }
+                            
+                            // Track options
+                            IconButton(
+                                onClick = { /* TODO: Track options menu */ }
+                            ) {
+                                Icon(
+                                    Icons.Default.MoreVert,
+                                    contentDescription = "Track Options",
+                                    tint = if (index == currentIndex)
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }

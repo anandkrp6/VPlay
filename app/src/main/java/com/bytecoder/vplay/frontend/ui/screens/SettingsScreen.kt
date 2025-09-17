@@ -17,26 +17,50 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Adb
+import androidx.compose.material.icons.filled.Analytics
+import androidx.compose.material.icons.filled.Animation
+import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.Brightness6
 import androidx.compose.material.icons.filled.BrightnessAuto
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.CloudSync
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.DeveloperMode
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Equalizer
+import androidx.compose.material.icons.filled.Feedback
+import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.FullscreenExit
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Headset
 import androidx.compose.material.icons.filled.HighQuality
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Policy
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.TextFormat
+import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.filled.VideoFile
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -124,9 +148,9 @@ fun SettingsScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Appearance Section
+            // Enhanced UI/Display Section
             item {
-                SettingsSection(title = "Appearance") {
+                SettingsSection(title = "UI & Display") {
                     SettingsItem(
                         icon = Icons.Default.Palette,
                         title = "Theme",
@@ -148,12 +172,44 @@ fun SettingsScreen(
                         subtitle = "English",
                         onClick = { showLanguageDialog = true }
                     )
+                    
+                    // New UI options
+                    SettingsToggleItem(
+                        icon = Icons.Default.GridView,
+                        title = "Grid View",
+                        subtitle = "Show albums and playlists in grid layout",
+                        checked = true,
+                        onCheckedChange = { /* TODO: Implement grid view toggle */ }
+                    )
+                    
+                    SettingsToggleItem(
+                        icon = Icons.Default.Animation,
+                        title = "Animations",
+                        subtitle = "Enable smooth animations and transitions",
+                        checked = true,
+                        onCheckedChange = { /* TODO: Implement animation toggle */ }
+                    )
+                    
+                    SettingsItem(
+                        icon = Icons.Default.TextFormat,
+                        title = "Font Size",
+                        subtitle = "Medium",
+                        onClick = { /* TODO: Font size dialog */ }
+                    )
+                    
+                    SettingsToggleItem(
+                        icon = Icons.Default.FullscreenExit,
+                        title = "Immersive Mode",
+                        subtitle = "Hide status bar during playback",
+                        checked = false,
+                        onCheckedChange = { /* TODO: Implement immersive mode */ }
+                    )
                 }
             }
             
-            // Playback Section
+            // Enhanced Playback Section with more options
             item {
-                SettingsSection(title = "Playback") {
+                SettingsSection(title = "Playback Settings") {
                     SettingsToggleItem(
                         icon = Icons.Default.PlayArrow,
                         title = "Auto Play",
@@ -195,6 +251,30 @@ fun SettingsScreen(
                         subtitle = "Continue playing when app is minimized",
                         checked = backgroundPlayEnabled,
                         onCheckedChange = { settingsViewModel.setBackgroundPlay(it) }
+                    )
+                    
+                    // New advanced playback options
+                    SettingsToggleItem(
+                        icon = Icons.Default.Headset,
+                        title = "Headphone Detection",
+                        subtitle = "Pause when headphones are disconnected",
+                        checked = true,
+                        onCheckedChange = { /* TODO: Implement headphone detection */ }
+                    )
+                    
+                    SettingsItem(
+                        icon = Icons.Default.Speed,
+                        title = "Playback Speed",
+                        subtitle = "Normal (1.0x)",
+                        onClick = { /* TODO: Playback speed dialog */ }
+                    )
+                    
+                    SettingsToggleItem(
+                        icon = Icons.Default.SkipNext,
+                        title = "Smart Skip",
+                        subtitle = "Skip silent parts in audio",
+                        checked = false,
+                        onCheckedChange = { /* TODO: Implement smart skip */ }
                     )
                 }
             }
@@ -274,26 +354,60 @@ fun SettingsScreen(
                 }
             }
             
-            // Storage Section
+            // Enhanced Storage Section
             item {
-                SettingsSection(title = "Storage & Cache") {
+                SettingsSection(title = "Storage & Data") {
                     SettingsItem(
                         icon = Icons.Default.Storage,
+                        title = "Storage Usage",
+                        subtitle = "App: 2.3 GB • Cache: 450 MB",
+                        onClick = { /* TODO: Navigate to storage details */ }
+                    )
+                    
+                    SettingsItem(
+                        icon = Icons.Default.DeleteSweep,
                         title = "Clear Cache",
                         subtitle = "Free up storage space",
                         onClick = { settingsViewModel.clearCache() }
                     )
                     
                     SettingsItem(
-                        icon = Icons.Default.Storage,
-                        title = "Storage Usage",
-                        subtitle = "View app storage details",
-                        onClick = { /* TODO: Navigate to storage details */ }
+                        icon = Icons.Default.CloudSync,
+                        title = "Backup & Sync",
+                        subtitle = "Sync playlists and preferences",
+                        onClick = { /* TODO: Navigate to backup settings */ }
+                    )
+                    
+                    SettingsToggleItem(
+                        icon = Icons.Default.Download,
+                        title = "Auto Download",
+                        subtitle = "Download songs when on Wi-Fi",
+                        checked = false,
+                        onCheckedChange = { /* TODO: Implement auto download */ }
+                    )
+                    
+                    SettingsItem(
+                        icon = Icons.Default.FolderOpen,
+                        title = "Download Location",
+                        subtitle = "Internal Storage/VPlay",
+                        onClick = { /* TODO: Download location picker */ }
+                    )
+                    
+                    SettingsSliderItem(
+                        title = "Max Cache Size",
+                        subtitle = "${bufferSize.toInt()} MB",
+                        value = bufferSize,
+                        onValueChange = { 
+                            bufferSize = it
+                            settingsViewModel.setBufferSize(it.toInt())
+                        },
+                        valueRange = 10f..500f,
+                        steps = 48
                     )
                 }
             }
             
-            // Privacy & Security Section
+            // Enhanced Privacy & Security Section
             item {
                 SettingsSection(title = "Privacy & Security") {
                     SettingsItem(
@@ -302,17 +416,125 @@ fun SettingsScreen(
                         subtitle = "Manage your privacy preferences",
                         onClick = { /* TODO: Navigate to privacy settings */ }
                     )
+                    
+                    SettingsToggleItem(
+                        icon = Icons.Default.Analytics,
+                        title = "Usage Analytics",
+                        subtitle = "Help improve VPlay by sharing usage data",
+                        checked = true,
+                        onCheckedChange = { /* TODO: Implement analytics toggle */ }
+                    )
+                    
+                    SettingsToggleItem(
+                        icon = Icons.Default.History,
+                        title = "Listening History",
+                        subtitle = "Track what you listen to",
+                        checked = true,
+                        onCheckedChange = { /* TODO: Implement history toggle */ }
+                    )
+                    
+                    SettingsItem(
+                        icon = Icons.Default.DeleteForever,
+                        title = "Clear All Data",
+                        subtitle = "Reset app to factory defaults",
+                        onClick = { /* TODO: Clear all data dialog */ }
+                    )
+                    
+                    SettingsToggleItem(
+                        icon = Icons.Default.LocationOn,
+                        title = "Location Services",
+                        subtitle = "For local music discovery",
+                        checked = false,
+                        onCheckedChange = { /* TODO: Implement location toggle */ }
+                    )
                 }
             }
             
-            // About Section
+            // Enhanced About Section
             item {
-                SettingsSection(title = "About") {
+                SettingsSection(title = "About & Support") {
                     SettingsItem(
                         icon = Icons.Default.Info,
                         title = "About VPlay",
-                        subtitle = "Version 3.0.0",
+                        subtitle = "Version 3.0.0 (Build 2025.09.17)",
                         onClick = { showAboutDialog = true }
+                    )
+                    
+                    SettingsItem(
+                        icon = Icons.Default.Update,
+                        title = "Check for Updates",
+                        subtitle = "You're up to date",
+                        onClick = { /* TODO: Check for updates */ }
+                    )
+                    
+                    SettingsItem(
+                        icon = Icons.Default.BugReport,
+                        title = "Report a Bug",
+                        subtitle = "Help us improve VPlay",
+                        onClick = { /* TODO: Bug report */ }
+                    )
+                    
+                    SettingsItem(
+                        icon = Icons.Default.Feedback,
+                        title = "Send Feedback",
+                        subtitle = "Share your thoughts and suggestions",
+                        onClick = { /* TODO: Feedback form */ }
+                    )
+                    
+                    SettingsItem(
+                        icon = Icons.Default.Article,
+                        title = "Terms of Service",
+                        subtitle = "Read our terms and conditions",
+                        onClick = { /* TODO: Terms of service */ }
+                    )
+                    
+                    SettingsItem(
+                        icon = Icons.Default.Policy,
+                        title = "Privacy Policy",
+                        subtitle = "Learn how we protect your data",
+                        onClick = { /* TODO: Privacy policy */ }
+                    )
+                    
+                    SettingsItem(
+                        icon = Icons.Default.Code,
+                        title = "Open Source Licenses",
+                        subtitle = "View third-party licenses",
+                        onClick = { /* TODO: Open source licenses */ }
+                    )
+                }
+            }
+            
+            // Developer Options Section (hidden by default)
+            item {
+                SettingsSection(title = "Developer Options") {
+                    SettingsToggleItem(
+                        icon = Icons.Default.DeveloperMode,
+                        title = "Debug Mode",
+                        subtitle = "Enable detailed logging",
+                        checked = false,
+                        onCheckedChange = { /* TODO: Implement debug mode */ }
+                    )
+                    
+                    SettingsItem(
+                        icon = Icons.Default.Memory,
+                        title = "Performance Monitor",
+                        subtitle = "View app performance metrics",
+                        onClick = { /* TODO: Performance monitor */ }
+                    )
+                    
+                    SettingsItem(
+                        icon = Icons.Default.Adb,
+                        title = "Export Logs",
+                        subtitle = "Share debug information",
+                        onClick = { /* TODO: Export logs */ }
+                    )
+                    
+                    SettingsToggleItem(
+                        icon = Icons.Default.Science,
+                        title = "Experimental Features",
+                        subtitle = "Enable beta features (may be unstable)",
+                        checked = false,
+                        onCheckedChange = { /* TODO: Experimental features */ }
                     )
                 }
             }
@@ -380,21 +602,27 @@ fun SettingsSection(
     title: String,
     content: @Composable () -> Unit
 ) {
-    Column {
+    Column(
+        modifier = Modifier.padding(vertical = 4.dp)
+    ) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 12.dp)
         )
         
         Card(
             modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            ),
+            shape = MaterialTheme.shapes.large
         ) {
             Column(
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(vertical = 4.dp)
             ) {
                 content()
             }
@@ -418,24 +646,26 @@ fun SettingsItem(
                 onClick = onClick,
                 role = Role.Button
             )
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            modifier = Modifier.size(24.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            modifier = Modifier.size(28.dp),
+            tint = MaterialTheme.colorScheme.primary
         )
         
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(20.dp))
         
         Column(
             modifier = Modifier.weight(1f)
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = subtitle,
@@ -447,7 +677,7 @@ fun SettingsItem(
         Icon(
             imageVector = Icons.Default.ChevronRight,
             contentDescription = null,
-            modifier = Modifier.size(20.dp),
+            modifier = Modifier.size(24.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
@@ -465,24 +695,26 @@ fun SettingsToggleItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            modifier = Modifier.size(24.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            modifier = Modifier.size(28.dp),
+            tint = MaterialTheme.colorScheme.primary
         )
         
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(20.dp))
         
         Column(
             modifier = Modifier.weight(1f)
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = subtitle,

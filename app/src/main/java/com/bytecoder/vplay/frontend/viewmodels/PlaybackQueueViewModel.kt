@@ -203,4 +203,9 @@ class PlaybackQueueViewModel : ViewModel() {
             }
         }
     }
+    
+    fun saveQueueAsPlaylist(name: String) {
+        // TODO: Implement save queue as playlist functionality
+        // This would typically involve saving to Room database
+    }
 }

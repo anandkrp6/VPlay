@@ -38,10 +38,18 @@ sealed class VPlayScreen(val route: String, val title: String, val icon: ImageVe
     // Detailed screens
     object AudioPlayer : VPlayScreen("audio_player", "Now Playing", Icons.Filled.MusicNote)
     object VideoPlayer : VPlayScreen("video_player/{videoId}", "Video Player", Icons.Filled.PlayCircle)
+    object Queue : VPlayScreen("queue", "Queue", Icons.Filled.QueueMusic)
     object Downloads : VPlayScreen("downloads", "Downloads", Icons.Filled.Download)
     object FileExplorer : VPlayScreen("file_explorer", "Files", Icons.Filled.Folder)
     object PrivacyManager : VPlayScreen("privacy_manager", "Privacy", Icons.Filled.Security)
     object MediaTools : VPlayScreen("media_tools", "Media Tools", Icons.Filled.AudioFile)
+    
+    // New option screens
+    object Feedback : VPlayScreen("feedback", "Feedback", Icons.Filled.Feedback)
+    object About : VPlayScreen("about", "About", Icons.Filled.Info)
+    object Tips : VPlayScreen("tips", "Tips", Icons.Filled.Lightbulb)
+    object History : VPlayScreen("history", "History", Icons.Filled.History)
+    object Permissions : VPlayScreen("permissions", "Permissions", Icons.Filled.Security)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -71,6 +79,11 @@ fun VPlayApp(
         sharedPrefs.getString("last_used_tab", VPlayScreen.Music.route) ?: VPlayScreen.Music.route 
     }
 
+    // Get current tab name for top bar
+    val currentTabName = remember(currentDestination?.route) {
+        screens.find { it.route == currentDestination?.route }?.title ?: "vPlay"
+    }
+
     // Save current tab when navigation changes
     LaunchedEffect(currentDestination?.route) {
         currentDestination?.route?.let { route ->
@@ -81,6 +94,48 @@ fun VPlayApp(
     }
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = currentTabName,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                },
+                navigationIcon = {
+                    // App logo on the left (24dp height as per plan)
+                    Icon(
+                        imageVector = Icons.Filled.MusicNote, // TODO: Replace with actual vPlay logo
+                        contentDescription = "vPlay",
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                actions = {
+                    // Search icon
+                    IconButton(onClick = { /* TODO: Implement search */ }) {
+                        Icon(
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = "Search",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    // 3-dot overflow menu
+                    IconButton(onClick = { /* TODO: Implement overflow menu */ }) {
+                        Icon(
+                            imageVector = Icons.Filled.MoreVert,
+                            contentDescription = "More options",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                )
+            )
+        },
         bottomBar = {
             NavigationBar(
                 containerColor = MaterialTheme.colorScheme.surfaceContainer,
@@ -143,7 +198,7 @@ fun VPlayApp(
                     OnlineScreen(queueViewModel = queueViewModel, navController = navController)
                 }
                 composable(VPlayScreen.Options.route) {
-                    ToolsScreen(queueViewModel = queueViewModel, navController = navController)
+                    OptionsScreen(navController = navController)
                 }
             composable(VPlayScreen.Settings.route) {
                 SettingsScreen(navController = navController)
@@ -160,6 +215,9 @@ fun VPlayApp(
                 val videoId = backStackEntry.arguments?.getString("videoId") ?: ""
                 VideoPlayerScreen(videoId = videoId, queueViewModel = queueViewModel, navController = navController)
             }
+            composable(VPlayScreen.Queue.route) {
+                QueueScreen(queueViewModel = queueViewModel, navController = navController)
+            }
             composable(VPlayScreen.Downloads.route) {
                 DownloadsScreen(queueViewModel = queueViewModel, navController = navController)
             }
@@ -172,14 +230,31 @@ fun VPlayApp(
             composable(VPlayScreen.MediaTools.route) {
                 MediaToolsScreen(queueViewModel = queueViewModel, navController = navController)
             }
+            
+            // New option screens
+            composable(VPlayScreen.Feedback.route) {
+                FeedbackScreen(navController = navController)
+            }
+            composable(VPlayScreen.About.route) {
+                AboutScreen(navController = navController)
+            }
+            composable(VPlayScreen.Tips.route) {
+                TipsScreen(navController = navController)
+            }
+            composable(VPlayScreen.History.route) {
+                HistoryScreen(navController = navController)
+            }
+            composable(VPlayScreen.Permissions.route) {
+                PermissionsScreen(navController = navController)
+            }
         }
         
         // Mini-player overlay
         MiniPlayer(
             queueViewModel = queueViewModel,
             onNavigateToQueue = { 
-                // Navigate to audio player since we removed separate queue tab
-                navController.navigate("audio_player")
+                // Navigate to dedicated queue screen
+                navController.navigate(VPlayScreen.Queue.route)
             },
             onRequestNotificationPermission = { /* TODO: Handle permissions */ },
             modifier = Modifier.align(Alignment.BottomCenter)

@@ -5,36 +5,20 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -57,133 +41,183 @@ fun MiniPlayer(
     
     val currentItem = if (currentIndex in queue.indices) queue[currentIndex] else null
     
+    // Only show mini player when media is playing or paused
     AnimatedVisibility(
         visible = currentItem != null,
         enter = slideInVertically(initialOffsetY = { it }),
         exit = slideOutVertically(targetOffsetY = { it })
     ) {
-        Card(
-            modifier = modifier
-                .fillMaxWidth()
-                .clickable { onNavigateToQueue() },
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
+        Column(
+            modifier = modifier.fillMaxWidth()
         ) {
-            Column {
-                // Progress indicator
-                if (duration > 0) {
-                    LinearProgressIndicator(
-                        progress = { (position.toFloat() / duration.toFloat()).coerceIn(0f, 1f) },
-                        modifier = Modifier.fillMaxWidth(),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                } else {
-                    Spacer(modifier = Modifier.height(4.dp))
-                }
-                
-                Row(
+            // Thin progress bar at top (2dp) - Plan specification
+            if (duration > 0) {
+                LinearProgressIndicator(
+                    progress = { (position.toFloat() / duration.toFloat()).coerceIn(0f, 1f) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .height(2.dp),
+                    color = if (isPlaying) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                    trackColor = Color.Transparent
+                )
+            }
+            
+            // Main mini player content
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp) // Standard mini player height
+                    .pointerInput(Unit) {
+                        detectDragGestures { _, dragAmount ->
+                            if (dragAmount.y > 50) {
+                                // Swipe down to close - pause playback + clear queue
+                                if (PlayerManager.isPlaying.value == true) {
+                                    PlayerManager.playPause() // This will pause if currently playing
+                                }
+                                queueViewModel.clearQueue()
+                            } else if (dragAmount.y < -50) {
+                                // Swipe up to open full player
+                                onNavigateToQueue()
+                            }
+                        }
+                    },
+                color = MaterialTheme.colorScheme.surfaceContainer,
+                shadowElevation = 8.dp
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Album art or thumbnail
+                    // LEFT SECTION (30%) - Small preview window
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
+                            .weight(0.3f)
+                            .aspectRatio(1f)
+                            .padding(4.dp)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .background(MaterialTheme.colorScheme.surface)
+                            .clickable { onNavigateToQueue() },
+                        contentAlignment = Alignment.Center
                     ) {
                         currentItem?.let { item ->
-                            if (item.thumbnailPath?.isNotEmpty() == true) {
+                            if (item.isVideo && item.thumbnailPath?.isNotEmpty() == true) {
+                                // Video: Live video preview (muted) - TODO: Implement live preview
                                 AsyncImage(
                                     model = item.thumbnailPath,
-                                    contentDescription = "Album Art",
-                                    modifier = Modifier.size(48.dp)
+                                    contentDescription = "Video preview",
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                                // Play overlay for video preview
+                                Icon(
+                                    imageVector = Icons.Filled.PlayCircle,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp),
+                                    tint = Color.White.copy(alpha = 0.8f)
+                                )
+                            } else if (!item.isVideo && item.thumbnailPath?.isNotEmpty() == true) {
+                                // Audio: Album art thumbnail
+                                AsyncImage(
+                                    model = item.thumbnailPath,
+                                    contentDescription = "Album art",
+                                    modifier = Modifier.fillMaxSize()
                                 )
                             } else {
-                                // Default music/video icon
-                                Icon(
-                                    imageVector = if (item.isVideo) Icons.Default.PlayArrow else Icons.Default.PlayArrow,
-                                    contentDescription = null,
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .align(Alignment.Center),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                // Fallback: Animated equalizer (colorful when playing, white when paused)
+                                AnimatedEqualizer(isPlaying = isPlaying)
                             }
                         }
                     }
                     
-                    Spacer(modifier = Modifier.width(12.dp))
-                    
-                    // Title and subtitle
-                    Column(
-                        modifier = Modifier.weight(1f)
+                    // CENTER SECTION (40%) - Play/Pause button (Material 3 FAB style)
+                    Box(
+                        modifier = Modifier
+                            .weight(0.4f)
+                            .padding(horizontal = 8.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = currentItem?.title ?: "",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        currentItem?.subtitle?.let { subtitle ->
-                            Text(
-                                text = subtitle,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-                    
-                    // Control buttons
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconButton(
-                            onClick = { PlayerManager.previous() },
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.SkipPrevious,
-                                contentDescription = "Previous",
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                        
-                        IconButton(
+                        FloatingActionButton(
                             onClick = { 
                                 onRequestNotificationPermission()
                                 PlayerManager.playPause() 
                             },
-                            modifier = Modifier.size(40.dp)
+                            modifier = Modifier.size(48.dp),
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         ) {
                             Icon(
-                                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                                 contentDescription = if (isPlaying) "Pause" else "Play",
-                                tint = MaterialTheme.colorScheme.primary
+                                modifier = Modifier.size(24.dp)
                             )
                         }
-                        
+                    }
+                    
+                    // RIGHT SECTION (30%) - Close (X) button
+                    Box(
+                        modifier = Modifier
+                            .weight(0.3f)
+                            .padding(4.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
                         IconButton(
-                            onClick = { PlayerManager.next() },
+                            onClick = { 
+                                // Close - pause playback & clear queue
+                                if (isPlaying) {
+                                    PlayerManager.playPause() // This will pause if currently playing
+                                }
+                                queueViewModel.clearQueue()
+                            },
                             modifier = Modifier.size(40.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.SkipNext,
-                                contentDescription = "Next",
-                                tint = MaterialTheme.colorScheme.onSurface
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = "Close player",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun AnimatedEqualizer(
+    isPlaying: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val barCount = 5
+    val barColors = if (isPlaying) {
+        listOf(
+            MaterialTheme.colorScheme.primary,
+            MaterialTheme.colorScheme.secondary,
+            MaterialTheme.colorScheme.tertiary,
+            MaterialTheme.colorScheme.primary,
+            MaterialTheme.colorScheme.secondary
+        )
+    } else {
+        List(barCount) { MaterialTheme.colorScheme.outline }
+    }
+    
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        repeat(barCount) { index ->
+            Box(
+                modifier = Modifier
+                    .width(3.dp)
+                    .height(if (isPlaying) (12..24).random().dp else 16.dp)
+                    .background(
+                        color = barColors[index],
+                        shape = RoundedCornerShape(1.dp)
+                    )
+            )
         }
     }
 }
