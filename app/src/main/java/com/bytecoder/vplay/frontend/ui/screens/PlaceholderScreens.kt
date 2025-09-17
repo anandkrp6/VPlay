@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.bytecoder.vplay.frontend.viewmodels.PlaybackQueueViewModel
 import com.bytecoder.vplay.TabMode
+import com.bytecoder.vplay.frontend.ui.components.EqualizerDialog
 
 @Composable
 fun VideosScreen(
@@ -162,62 +163,11 @@ fun MusicScreen(
     queueViewModel: PlaybackQueueViewModel,
     navController: NavController
 ) {
-    var selectedMode by remember { mutableStateOf(TabMode.LIBRARY) }
-    
-    Column(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        // Header with title and actions
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Music",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
-            IconButton(
-                onClick = { /* TODO: Refresh music */ }
-            ) {
-                Icon(
-                    Icons.Default.Refresh,
-                    contentDescription = "Refresh Music",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-        
-        // Tab row for Library/Playlists
-        TabRow(
-            selectedTabIndex = selectedMode.ordinal,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Tab(
-                selected = selectedMode == TabMode.LIBRARY,
-                onClick = { selectedMode = TabMode.LIBRARY },
-                text = { Text("Library") }
-            )
-            Tab(
-                selected = selectedMode == TabMode.PLAYLISTS,
-                onClick = { selectedMode = TabMode.PLAYLISTS },
-                text = { Text("Playlists") }
-            )
-        }
-        
-        // Content based on selected mode
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            when (selectedMode) {
-                TabMode.LIBRARY -> MusicLibraryContent()
-                TabMode.PLAYLISTS -> MusicPlaylistsContent()
-            }
-        }
-    }
+    // Use the enhanced music screen implementation
+    EnhancedMusicScreen(
+        queueViewModel = queueViewModel,
+        navController = navController
+    )
 }
 
 @Composable
@@ -404,7 +354,7 @@ fun OnlineScreen(
             modifier = Modifier.fillMaxSize()
         ) {
             when (selectedMode) {
-                TabMode.LIBRARY -> OnlineBrowseContent()
+                TabMode.LIBRARY -> OnlineBrowseContent(navController)
                 TabMode.PLAYLISTS -> OnlineSavedContent()
             }
         }
@@ -412,7 +362,7 @@ fun OnlineScreen(
 }
 
 @Composable
-private fun OnlineBrowseContent() {
+private fun OnlineBrowseContent(navController: NavController) {
     var searchQuery by remember { mutableStateOf("") }
     
     Column(
@@ -427,7 +377,10 @@ private fun OnlineBrowseContent() {
             trailingIcon = {
                 IconButton(
                     onClick = { 
-                        // TODO: Implement search
+                        if (searchQuery.isNotBlank()) {
+                            // Navigate to search screen with query
+                            navController.navigate("search?query=$searchQuery")
+                        }
                     }
                 ) {
                     Icon(Icons.Default.Search, contentDescription = "Search")
@@ -515,6 +468,8 @@ fun ToolsScreen(
     queueViewModel: PlaybackQueueViewModel,
     navController: NavController
 ) {
+    var showEqualizerDialog by remember { mutableStateOf(false) }
+    
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -690,7 +645,7 @@ fun ToolsScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { 
-                    // TODO: Open equalizer
+                    showEqualizerDialog = true
                 }
             ) {
                 Row(
@@ -765,5 +720,12 @@ fun ToolsScreen(
                 }
             }
         }
+    }
+    
+    // Show equalizer dialog if requested
+    if (showEqualizerDialog) {
+        EqualizerDialog(
+            onDismiss = { showEqualizerDialog = false }
+        )
     }
 }

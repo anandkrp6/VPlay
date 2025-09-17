@@ -114,7 +114,9 @@ fun VPlayApp(
                 },
                 actions = {
                     // Search icon
-                    IconButton(onClick = { /* TODO: Implement search */ }) {
+                    IconButton(onClick = { 
+                        navController.navigate("search")
+                    }) {
                         Icon(
                             imageVector = Icons.Filled.Search,
                             contentDescription = "Search",
@@ -246,6 +248,27 @@ fun VPlayApp(
             }
             composable(VPlayScreen.Permissions.route) {
                 PermissionsScreen(navController = navController)
+            }
+            
+            // Search screen
+            composable("search") {
+                SearchScreen(
+                    navController = navController,
+                    queueViewModel = queueViewModel
+                )
+            }
+            
+            // Playlist detail screen
+            composable(
+                route = "playlist_detail/{playlistId}",
+                arguments = listOf(navArgument("playlistId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val playlistId = backStackEntry.arguments?.getString("playlistId") ?: ""
+                PlaylistDetailScreen(
+                    playlistId = playlistId,
+                    queueViewModel = queueViewModel,
+                    navController = navController
+                )
             }
         }
         

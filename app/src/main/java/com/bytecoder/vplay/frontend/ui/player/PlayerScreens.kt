@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,18 +43,37 @@ fun VideoPlayerScreen(
 ) {
     val context = LocalContext.current
     var controlsVisible by remember { mutableStateOf(true) }
-    var brightness by remember { mutableStateOf(0.5f) }
-    var volume by remember { mutableStateOf(0.5f) }
     var showBrightnessOverlay by remember { mutableStateOf(false) }
     var showVolumeOverlay by remember { mutableStateOf(false) }
     var showSeekOverlay by remember { mutableStateOf(false) }
     var seekDirection by remember { mutableStateOf("") }
+    
+    // Collect video player state
+    val currentMedia by videoPlayerViewModel.currentMedia.collectAsState()
+    val isPlaying by videoPlayerViewModel.isPlaying.collectAsState()
+    val currentPosition by videoPlayerViewModel.currentPosition.collectAsState()
+    val duration by videoPlayerViewModel.duration.collectAsState()
+    val volume by videoPlayerViewModel.volume.collectAsState()
+    val brightness by videoPlayerViewModel.brightness.collectAsState()
+    val isMuted by videoPlayerViewModel.isMuted.collectAsState()
+    val isFullscreen by videoPlayerViewModel.isFullscreen.collectAsState()
     
     // Collect subtitle-related state
     val availableSubtitles by videoPlayerViewModel.availableSubtitles.collectAsState()
     val selectedSubtitleTrack by videoPlayerViewModel.selectedSubtitleTrack.collectAsState()
     val subtitlesEnabled by videoPlayerViewModel.subtitlesEnabled.collectAsState()
     val showSubtitleDialog by videoPlayerViewModel.showSubtitleDialog.collectAsState()
+    
+    // Helper function to format time
+    fun formatTime(milliseconds: Long): String {
+        val totalSeconds = milliseconds / 1000
+        val minutes = totalSeconds / 60
+        val seconds = totalSeconds % 60
+        return String.format("%d:%02d", minutes, seconds)
+    }
+    
+    // Calculate progress
+    val progress = if (duration > 0) (currentPosition.toFloat() / duration.toFloat()) else 0f
     
     // File picker for external subtitles
     val subtitleFilePicker = rememberLauncherForActivityResult(
@@ -94,13 +114,15 @@ fun VideoPlayerScreen(
                                 offset.x < screenWidth * 0.3f -> {
                                     seekDirection = "Rewind 10s"
                                     showSeekOverlay = true
-                                    // TODO: Implement actual seek backward
+                                    val newPosition = (currentPosition - 10000).coerceAtLeast(0)
+                                    videoPlayerViewModel.seekTo(newPosition)
                                 }
                                 // Double tap right side - forward 10 seconds  
                                 offset.x > screenWidth * 0.7f -> {
                                     seekDirection = "Forward 10s"
                                     showSeekOverlay = true
-                                    // TODO: Implement actual seek forward
+                                    val newPosition = (currentPosition + 10000).coerceAtMost(duration)
+                                    videoPlayerViewModel.seekTo(newPosition)
                                 }
                                 // Single tap center - toggle controls
                                 else -> {
@@ -123,20 +145,22 @@ fun VideoPlayerScreen(
                             // Vertical swipe detected
                             if (dragAmount.x < screenWidth / 2) {
                                 // Left side - brightness control
-                                brightness = (brightness - dragAmount.y / 1000f).coerceIn(0f, 1f)
+                                val newBrightness = (brightness - dragAmount.y / 1000f).coerceIn(0f, 1f)
+                                videoPlayerViewModel.setBrightness(newBrightness)
                                 showBrightnessOverlay = true
-                                // TODO: Apply brightness to system/video
                             } else {
                                 // Right side - volume control
-                                volume = (volume - dragAmount.y / 1000f).coerceIn(0f, 1f)
+                                val newVolume = (volume - dragAmount.y / 1000f).coerceIn(0f, 1f)
+                                videoPlayerViewModel.setVolume(newVolume)
                                 showVolumeOverlay = true
-                                // TODO: Apply volume to audio manager
                             }
                         } else if (abs(dragAmount.x) > 50) {
                             // Horizontal swipe - seek forward/backward
-                            val seekDirection = if (dragAmount.x > 0) "Forward" else "Backward"
+                            val seekAmount = (dragAmount.x / screenWidth) * duration * 0.1f // 10% of duration per full swipe
+                            val newPosition = (currentPosition + seekAmount.toLong()).coerceIn(0, duration)
+                            videoPlayerViewModel.seekTo(newPosition)
                             showSeekOverlay = true
-                            // TODO: Implement horizontal seek
+                            seekDirection = if (dragAmount.x > 0) "Seeking Forward" else "Seeking Backward"
                         }
                     }
                 },
@@ -175,8 +199,8 @@ fun VideoPlayerScreen(
         ) {
             TopVideoControls(
                 onBackClick = { navController.navigateUp() },
-                onQueueClick = { /* TODO: Open queue */ },
-                title = "Video Title" // TODO: Get actual title
+                onQueueClick = { navController.navigate("queue") },
+                title = currentMedia?.title ?: "Video Player"
             )
         }
 
@@ -187,12 +211,18 @@ fun VideoPlayerScreen(
         ) {
             BottomVideoControls(
                 onPreviousClick = { videoPlayerViewModel.skipToPrevious() },
-                onPlayPauseClick = { videoPlayerViewModel.play() }, // Will toggle play/pause
+                onPlayPauseClick = { 
+                    if (isPlaying) videoPlayerViewModel.pause() else videoPlayerViewModel.play()
+                },
                 onNextClick = { videoPlayerViewModel.skipToNext() },
-                isPlaying = true, // TODO: Get actual playing state from VideoPlayerViewModel
-                currentTime = "0:00", // TODO: Get actual time
-                duration = "0:00", // TODO: Get actual duration
-                progress = 0f, // TODO: Get actual progress
+                isPlaying = isPlaying,
+                currentTime = formatTime(currentPosition),
+                duration = formatTime(duration),
+                progress = progress,
+                onSeek = { newProgress ->
+                    val newPosition = (newProgress * duration).toLong()
+                    videoPlayerViewModel.seekTo(newPosition)
+                },
                 subtitlesEnabled = subtitlesEnabled,
                 hasSubtitles = availableSubtitles.isNotEmpty(),
                 onSubtitleClick = { videoPlayerViewModel.showSubtitleDialog() },
@@ -336,6 +366,7 @@ private fun BottomVideoControls(
     currentTime: String,
     duration: String,
     progress: Float,
+    onSeek: (Float) -> Unit = {},
     subtitlesEnabled: Boolean,
     hasSubtitles: Boolean,
     onSubtitleClick: () -> Unit,
@@ -362,7 +393,7 @@ private fun BottomVideoControls(
                 
                 Slider(
                     value = progress,
-                    onValueChange = { /* TODO: Seek to position */ },
+                    onValueChange = onSeek,
                     modifier = Modifier.weight(1f),
                     colors = SliderDefaults.colors(
                         thumbColor = MaterialTheme.colorScheme.primary,

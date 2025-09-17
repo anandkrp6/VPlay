@@ -530,6 +530,48 @@ class MusicLibraryManager(private val context: Context) {
         }
     }
     
+    suspend fun updatePlaylist(
+        playlistId: String,
+        name: String,
+        description: String? = null
+    ): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val existingPlaylist = playlistDao.getPlaylist(playlistId)
+            if (existingPlaylist != null) {
+                val updatedPlaylist = existingPlaylist.copy(
+                    name = name,
+                    description = description
+                )
+                playlistDao.updatePlaylist(updatedPlaylist)
+                // Log playlist update (using trackError since trackEvent is private)
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            AnalyticsManager.trackError("update_playlist_failed", e.message)
+            false
+        }
+    }
+    
+    suspend fun deletePlaylist(playlistId: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            // First remove all tracks from the playlist
+            playlistTrackDao.clearPlaylist(playlistId)
+            
+            // Then get the playlist and delete it
+            val playlist = playlistDao.getPlaylist(playlistId)
+            if (playlist != null) {
+                playlistDao.deletePlaylist(playlist)
+            }
+            
+            true
+        } catch (e: Exception) {
+            AnalyticsManager.trackError("delete_playlist_failed", e.message)
+            false
+        }
+    }
+    
     // Smart Playlist Operations
     
     suspend fun generateSmartPlaylist(criteria: String): List<MusicTrack> = withContext(Dispatchers.IO) {

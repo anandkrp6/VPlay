@@ -138,7 +138,7 @@ fun QueueScreen(
                     .padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
-                EmptyQueueContent()
+                EmptyQueueContent(navController)
             }
         } else {
             // Queue content
@@ -405,7 +405,7 @@ fun QueueItem(
 }
 
 @Composable
-fun EmptyQueueContent() {
+fun EmptyQueueContent(navController: NavController) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -446,7 +446,9 @@ fun EmptyQueueContent() {
             Spacer(modifier = Modifier.height(24.dp))
             
             OutlinedButton(
-                onClick = { /* TODO: Navigate to music library */ }
+                onClick = { 
+                    navController.navigate("music_library")
+                }
             ) {
                 Icon(
                     Icons.Default.MusicNote,

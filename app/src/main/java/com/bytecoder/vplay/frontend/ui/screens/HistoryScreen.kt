@@ -12,58 +12,30 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.bytecoder.vplay.frontend.viewmodels.HistoryViewModel
+import com.bytecoder.vplay.backend.utils.HistoryTracker
 import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HistoryScreen(navController: NavController) {
-    // Mock history data
-    val historyItems = remember {
-        listOf(
-            HistoryItem(
-                title = "Movie.mp4",
-                type = MediaType.VIDEO,
-                duration = "2:15:30",
-                watchedAt = System.currentTimeMillis() - 3600000, // 1 hour ago
-                thumbnail = null,
-                progress = 0.75f
-            ),
-            HistoryItem(
-                title = "Song.mp3",
-                type = MediaType.AUDIO,
-                duration = "3:45",
-                watchedAt = System.currentTimeMillis() - 7200000, // 2 hours ago
-                thumbnail = null,
-                progress = 1.0f
-            ),
-            HistoryItem(
-                title = "Documentary.mkv",
-                type = MediaType.VIDEO,
-                duration = "1:32:15",
-                watchedAt = System.currentTimeMillis() - 86400000, // 1 day ago
-                thumbnail = null,
-                progress = 0.45f
-            ),
-            HistoryItem(
-                title = "Podcast.mp3",
-                type = MediaType.AUDIO,
-                duration = "45:20",
-                watchedAt = System.currentTimeMillis() - 172800000, // 2 days ago
-                thumbnail = null,
-                progress = 0.60f
-            ),
-            HistoryItem(
-                title = "Series S01E01.mp4",
-                type = MediaType.VIDEO,
-                duration = "42:18",
-                watchedAt = System.currentTimeMillis() - 259200000, // 3 days ago
-                thumbnail = null,
-                progress = 1.0f
-            )
-        )
+fun HistoryScreen(
+    navController: NavController,
+    historyViewModel: HistoryViewModel = viewModel()
+) {
+    val context = LocalContext.current
+    
+    // Initialize the view model
+    LaunchedEffect(Unit) {
+        historyViewModel.initialize(context)
     }
+    
+    // Collect history items from the view model
+    val historyItems by historyViewModel.historyItems.collectAsStateWithLifecycle()
     
     var showClearDialog by remember { mutableStateOf(false) }
     
@@ -107,7 +79,8 @@ fun HistoryScreen(navController: NavController) {
                 contentAlignment = Alignment.Center
             ) {
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
                     Icon(
                         Icons.Default.History,
@@ -118,7 +91,7 @@ fun HistoryScreen(navController: NavController) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "No watch history",
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                     Text(
@@ -131,24 +104,20 @@ fun HistoryScreen(navController: NavController) {
         } else {
             // History list
             LazyColumn(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(historyItems) { item ->
                     HistoryItemCard(
                         item = item,
                         onPlay = {
-                            // TODO: Resume playback
+                            // TODO: Play the media item
                         },
                         onRemove = {
-                            // TODO: Remove from history
+                            historyViewModel.removeFromHistory(item.id)
                         }
                     )
-                }
-                
-                // Bottom spacing
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }
@@ -172,7 +141,7 @@ fun HistoryScreen(navController: NavController) {
             confirmButton = {
                 TextButton(
                     onClick = { 
-                        // TODO: Clear history
+                        historyViewModel.clearAllHistory()
                         showClearDialog = false 
                     }
                 ) {
@@ -194,7 +163,7 @@ fun HistoryScreen(navController: NavController) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HistoryItemCard(
-    item: HistoryItem,
+    item: HistoryTracker.HistoryItem,
     onPlay: () -> Unit,
     onRemove: () -> Unit
 ) {
@@ -217,9 +186,10 @@ private fun HistoryItemCard(
                 modifier = Modifier.size(48.dp),
                 shape = MaterialTheme.shapes.medium,
                 colors = CardDefaults.cardColors(
-                    containerColor = when (item.type) {
-                        MediaType.VIDEO -> MaterialTheme.colorScheme.primaryContainer
-                        MediaType.AUDIO -> MaterialTheme.colorScheme.secondaryContainer
+                    containerColor = if (item.isVideo) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.secondaryContainer
                     }
                 )
             ) {
@@ -228,14 +198,16 @@ private fun HistoryItemCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = when (item.type) {
-                            MediaType.VIDEO -> Icons.Default.VideoFile
-                            MediaType.AUDIO -> Icons.Default.AudioFile
+                        imageVector = if (item.isVideo) {
+                            Icons.Default.VideoFile
+                        } else {
+                            Icons.Default.AudioFile
                         },
                         contentDescription = null,
-                        tint = when (item.type) {
-                            MediaType.VIDEO -> MaterialTheme.colorScheme.onPrimaryContainer
-                            MediaType.AUDIO -> MaterialTheme.colorScheme.onSecondaryContainer
+                        tint = if (item.isVideo) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSecondaryContainer
                         },
                         modifier = Modifier.size(24.dp)
                     )
@@ -250,10 +222,20 @@ private fun HistoryItemCard(
             ) {
                 Text(
                     text = item.title,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1
                 )
+                
+                if (item.subtitle.isNotEmpty()) {
+                    Text(
+                        text = item.subtitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        maxLines = 1
+                    )
+                }
                 
                 Spacer(modifier = Modifier.height(4.dp))
                 
@@ -261,41 +243,46 @@ private fun HistoryItemCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = item.duration,
+                        text = dateFormat.format(Date(item.lastPlayedTime)),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
-                    Text(
-                        text = " • ",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                    )
-                    Text(
-                        text = dateFormat.format(Date(item.watchedAt)),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
+                    
+                    if (item.durationMs > 0) {
+                        Text(
+                            text = " • ${formatDuration(item.durationMs)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                    
+                    if (item.playCount > 1) {
+                        Text(
+                            text = " • ${item.playCount} plays",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
                 }
                 
-                Spacer(modifier = Modifier.height(6.dp))
-                
                 // Progress bar
-                if (item.progress < 1.0f) {
+                if (item.progressPercentage > 0 && !item.isCompleted) {
+                    Spacer(modifier = Modifier.height(8.dp))
                     LinearProgressIndicator(
-                        progress = { item.progress },
+                        progress = { item.progressPercentage },
                         modifier = Modifier.fillMaxWidth(),
                         color = MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant,
                     )
-                } else {
+                } else if (item.isCompleted) {
+                    Spacer(modifier = Modifier.height(4.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
                             Icons.Default.CheckCircle,
                             contentDescription = "Completed",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
@@ -307,7 +294,7 @@ private fun HistoryItemCard(
                 }
             }
             
-            // Menu button
+            // More options menu
             Box {
                 IconButton(onClick = { showMenu = true }) {
                     Icon(
@@ -347,15 +334,15 @@ private fun HistoryItemCard(
     }
 }
 
-private data class HistoryItem(
-    val title: String,
-    val type: MediaType,
-    val duration: String,
-    val watchedAt: Long,
-    val thumbnail: String?,
-    val progress: Float // 0.0 to 1.0
-)
-
-private enum class MediaType {
-    VIDEO, AUDIO
+private fun formatDuration(durationMs: Long): String {
+    val totalSeconds = durationMs / 1000
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    
+    return if (hours > 0) {
+        String.format("%d:%02d:%02d", hours, minutes, seconds)
+    } else {
+        String.format("%d:%02d", minutes, seconds)
+    }
 }

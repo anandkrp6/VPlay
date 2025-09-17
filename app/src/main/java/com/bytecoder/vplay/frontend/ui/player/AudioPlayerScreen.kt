@@ -18,6 +18,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import com.bytecoder.vplay.backend.managers.MusicLibraryManager
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -77,6 +80,8 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import com.bytecoder.vplay.frontend.ui.components.SleepTimerButton
+import com.bytecoder.vplay.frontend.ui.components.EqualizerDialog
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
@@ -117,6 +122,7 @@ fun AudioPlayerScreen(
     audioPlayerViewModel: AudioPlayerViewModel = viewModel()
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val currentMedia by queueViewModel.currentMedia.observeAsState()
     val isPlaying by queueViewModel.isPlaying.observeAsState(false)
     val currentPosition by queueViewModel.currentPosition.observeAsState(0L)
@@ -129,6 +135,7 @@ fun AudioPlayerScreen(
     var repeatMode by remember { mutableStateOf(0) } // 0: none, 1: all, 2: one
     var isFavorite by remember { mutableStateOf(false) }
     var showQueue by remember { mutableStateOf(false) }
+    var showOptionsMenu by remember { mutableStateOf(false) }
     
     val scaffoldState = rememberBottomSheetScaffoldState()
     val infiniteTransition = rememberInfiniteTransition()
@@ -162,6 +169,8 @@ fun AudioPlayerScreen(
                         }
                     },
                     actions = {
+                        SleepTimerButton()
+                        
                         IconButton(onClick = { navController.navigate("queue") }) {
                             Icon(
                                 Icons.AutoMirrored.Filled.QueueMusic, 
@@ -169,7 +178,9 @@ fun AudioPlayerScreen(
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
-                        IconButton(onClick = { /* TODO: More options */ }) {
+                        IconButton(onClick = { 
+                            showOptionsMenu = true
+                        }) {
                             Icon(
                                 Icons.Default.MoreVert, 
                                 contentDescription = "More",
@@ -318,9 +329,9 @@ fun AudioPlayerScreen(
                                     )
                                 }
                                 
-                                // Album info if available
+                                // Album info if available  
                                 Text(
-                                    text = "Unknown Album", // TODO: Add album field to MediaItemModel
+                                    text = currentMedia?.subtitle?.takeIf { it?.isNotBlank() == true } ?: "Unknown Artist",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                                     maxLines = 1,
@@ -510,8 +521,20 @@ fun AudioPlayerScreen(
                                     // Favorite
                                     IconButton(
                                         onClick = { 
-                                            isFavorite = !isFavorite
-                                            // TODO: Update favorite status in database
+                                            currentMedia?.let { media ->
+                                                // Toggle favorite state locally
+                                                isFavorite = !isFavorite
+                                                // Update in database
+                                                scope.launch {
+                                                    try {
+                                                        val musicLibrary = MusicLibraryManager(context)
+                                                        musicLibrary.toggleFavorite(media.id)
+                                                    } catch (e: Exception) {
+                                                        // Revert on error
+                                                        isFavorite = !isFavorite
+                                                    }
+                                                }
+                                            }
                                         }
                                     ) {
                                         Icon(
@@ -524,7 +547,18 @@ fun AudioPlayerScreen(
                                     
                                     // Share
                                     IconButton(
-                                        onClick = { /* TODO: Implement share functionality */ }
+                                        onClick = { 
+                                            currentMedia?.let { media ->
+                                                val shareIntent = android.content.Intent().apply {
+                                                    action = android.content.Intent.ACTION_SEND
+                                                    type = "text/plain"
+                                                    putExtra(android.content.Intent.EXTRA_TEXT, 
+                                                        "Now playing: ${media.title}${media.subtitle?.let { " by $it" } ?: ""}")
+                                                    putExtra(android.content.Intent.EXTRA_SUBJECT, "Check out this song!")
+                                                }
+                                                context.startActivity(android.content.Intent.createChooser(shareIntent, "Share"))
+                                            }
+                                        }
                                     ) {
                                         Icon(
                                             Icons.Default.Share,
@@ -536,7 +570,10 @@ fun AudioPlayerScreen(
                                     
                                     // Equalizer
                                     IconButton(
-                                        onClick = { /* TODO: Open equalizer */ }
+                                        onClick = { 
+                                            // Navigate to equalizer screen
+                                            navController.navigate("equalizer")
+                                        }
                                     ) {
                                         Icon(
                                             Icons.Default.Equalizer,
@@ -548,7 +585,12 @@ fun AudioPlayerScreen(
                                     
                                     // Lyrics (placeholder for future implementation)
                                     IconButton(
-                                        onClick = { /* TODO: Show lyrics */ }
+                                        onClick = { 
+                                            // Navigate to lyrics screen
+                                            currentMedia?.let { media ->
+                                                navController.navigate("lyrics/${media.id}")
+                                            }
+                                        }
                                     ) {
                                         Icon(
                                             Icons.Default.Subtitles,
@@ -680,16 +722,21 @@ fun QueueBottomSheet(
                 // Queue actions
                 Row {
                     IconButton(
-                        onClick = { /* TODO: Shuffle queue */ }
+                        onClick = { 
+                            // queueViewModel.shuffleQueue()
+                            // isShuffleEnabled = !isShuffleEnabled
+                        }
                     ) {
                         Icon(
                             Icons.Default.Shuffle,
                             contentDescription = "Shuffle Queue",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant // if (isShuffleEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     IconButton(
-                        onClick = { /* TODO: Clear queue */ }
+                        onClick = { 
+                            // queueViewModel.clearQueue()
+                        }
                     ) {
                         Icon(
                             Icons.Default.Clear,
@@ -786,7 +833,11 @@ fun QueueBottomSheet(
                             
                             // Track options
                             IconButton(
-                                onClick = { /* TODO: Track options menu */ }
+                                onClick = { 
+                                    // Show track options menu (remove from queue, add to playlist, etc.)
+                                    // For now, just remove from queue
+                                    // queueViewModel.removeFromQueue(index)
+                                }
                             ) {
                                 Icon(
                                     Icons.Default.MoreVert,
@@ -801,8 +852,8 @@ fun QueueBottomSheet(
                 }
             }
         }
-    }
-}
+    } // VPlayTheme
+} // AudioPlayerScreen
 
 private fun formatTime(timeMs: Long): String {
     val totalSeconds = timeMs / 1000

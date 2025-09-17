@@ -25,6 +25,9 @@
             android:name=".backend.services.PlaybackService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
+        <service
+            android:name=".backend.services.SleepTimerService"
+            android:exported="false" />
         <activity
             android:name=".SplashActivity"
             android:exported="true"

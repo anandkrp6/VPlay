@@ -113,6 +113,14 @@ fun SettingsScreen(
     val highQualityEnabled by settingsViewModel.highQualityEnabled.collectAsState()
     val notificationsEnabled by settingsViewModel.notificationsEnabled.collectAsState()
     val backgroundPlayEnabled by settingsViewModel.backgroundPlayEnabled.collectAsState()
+    val gridViewEnabled by settingsViewModel.gridViewEnabled.collectAsState()
+    val animationsEnabled by settingsViewModel.animationsEnabled.collectAsState()
+    val immersiveModeEnabled by settingsViewModel.immersiveModeEnabled.collectAsState()
+    val headphoneDetectionEnabled by settingsViewModel.headphoneDetectionEnabled.collectAsState()
+    val smartSkipEnabled by settingsViewModel.smartSkipEnabled.collectAsState()
+    val defaultPlaybackSpeed by settingsViewModel.defaultPlaybackSpeed.collectAsState()
+    val autoDownloadEnabled by settingsViewModel.autoDownloadEnabled.collectAsState()
+    val analyticsEnabled by settingsViewModel.analyticsEnabled.collectAsState()
     
     var showThemeDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
@@ -178,16 +186,16 @@ fun SettingsScreen(
                         icon = Icons.Default.GridView,
                         title = "Grid View",
                         subtitle = "Show albums and playlists in grid layout",
-                        checked = true,
-                        onCheckedChange = { /* TODO: Implement grid view toggle */ }
+                        checked = gridViewEnabled,
+                        onCheckedChange = { settingsViewModel.setGridView(it) }
                     )
                     
                     SettingsToggleItem(
                         icon = Icons.Default.Animation,
                         title = "Animations",
                         subtitle = "Enable smooth animations and transitions",
-                        checked = true,
-                        onCheckedChange = { /* TODO: Implement animation toggle */ }
+                        checked = animationsEnabled,
+                        onCheckedChange = { settingsViewModel.setAnimations(it) }
                     )
                     
                     SettingsItem(
@@ -201,8 +209,8 @@ fun SettingsScreen(
                         icon = Icons.Default.FullscreenExit,
                         title = "Immersive Mode",
                         subtitle = "Hide status bar during playback",
-                        checked = false,
-                        onCheckedChange = { /* TODO: Implement immersive mode */ }
+                        checked = immersiveModeEnabled,
+                        onCheckedChange = { settingsViewModel.setImmersiveMode(it) }
                     )
                 }
             }
@@ -258,14 +266,14 @@ fun SettingsScreen(
                         icon = Icons.Default.Headset,
                         title = "Headphone Detection",
                         subtitle = "Pause when headphones are disconnected",
-                        checked = true,
-                        onCheckedChange = { /* TODO: Implement headphone detection */ }
+                        checked = headphoneDetectionEnabled,
+                        onCheckedChange = { settingsViewModel.setHeadphoneDetection(it) }
                     )
                     
                     SettingsItem(
                         icon = Icons.Default.Speed,
                         title = "Playback Speed",
-                        subtitle = "Normal (1.0x)",
+                        subtitle = "${String.format("%.1f", defaultPlaybackSpeed)}x",
                         onClick = { /* TODO: Playback speed dialog */ }
                     )
                     
@@ -273,8 +281,8 @@ fun SettingsScreen(
                         icon = Icons.Default.SkipNext,
                         title = "Smart Skip",
                         subtitle = "Skip silent parts in audio",
-                        checked = false,
-                        onCheckedChange = { /* TODO: Implement smart skip */ }
+                        checked = smartSkipEnabled,
+                        onCheckedChange = { settingsViewModel.setSmartSkip(it) }
                     )
                 }
             }
@@ -293,7 +301,9 @@ fun SettingsScreen(
                         icon = Icons.Default.Equalizer,
                         title = "Equalizer",
                         subtitle = "Adjust sound settings",
-                        onClick = { /* TODO: Navigate to equalizer */ }
+                        onClick = { 
+                            navController.navigate("equalizer")
+                        }
                     )
                     
                     SettingsSliderItem(
@@ -361,7 +371,9 @@ fun SettingsScreen(
                         icon = Icons.Default.Storage,
                         title = "Storage Usage",
                         subtitle = "App: 2.3 GB • Cache: 450 MB",
-                        onClick = { /* TODO: Navigate to storage details */ }
+                        onClick = { 
+                            navController.navigate("storage_details")
+                        }
                     )
                     
                     SettingsItem(
@@ -375,15 +387,17 @@ fun SettingsScreen(
                         icon = Icons.Default.CloudSync,
                         title = "Backup & Sync",
                         subtitle = "Sync playlists and preferences",
-                        onClick = { /* TODO: Navigate to backup settings */ }
+                        onClick = { 
+                            navController.navigate("backup_settings")
+                        }
                     )
                     
                     SettingsToggleItem(
                         icon = Icons.Default.Download,
                         title = "Auto Download",
                         subtitle = "Download songs when on Wi-Fi",
-                        checked = false,
-                        onCheckedChange = { /* TODO: Implement auto download */ }
+                        checked = autoDownloadEnabled,
+                        onCheckedChange = { settingsViewModel.setAutoDownload(it) }
                     )
                     
                     SettingsItem(
@@ -414,15 +428,17 @@ fun SettingsScreen(
                         icon = Icons.Default.Security,
                         title = "Privacy Settings",
                         subtitle = "Manage your privacy preferences",
-                        onClick = { /* TODO: Navigate to privacy settings */ }
+                        onClick = { 
+                            navController.navigate("privacy_settings")
+                        }
                     )
                     
                     SettingsToggleItem(
                         icon = Icons.Default.Analytics,
                         title = "Usage Analytics",
                         subtitle = "Help improve VPlay by sharing usage data",
-                        checked = true,
-                        onCheckedChange = { /* TODO: Implement analytics toggle */ }
+                        checked = analyticsEnabled,
+                        onCheckedChange = { settingsViewModel.setAnalytics(it) }
                     )
                     
                     SettingsToggleItem(
@@ -478,14 +494,18 @@ fun SettingsScreen(
                         icon = Icons.Default.Feedback,
                         title = "Send Feedback",
                         subtitle = "Share your thoughts and suggestions",
-                        onClick = { /* TODO: Feedback form */ }
+                        onClick = { 
+                            navController.navigate("feedback")
+                        }
                     )
                     
                     SettingsItem(
                         icon = Icons.Default.Article,
                         title = "Terms of Service",
                         subtitle = "Read our terms and conditions",
-                        onClick = { /* TODO: Terms of service */ }
+                        onClick = { 
+                            navController.navigate("about")
+                        }
                     )
                     
                     SettingsItem(

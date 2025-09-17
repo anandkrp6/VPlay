@@ -3,10 +3,22 @@ package com.bytecoder.vplay.frontend.viewmodels
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
+import android.content.Context
 import com.bytecoder.vplay.backend.data.models.OnlineContentModel
 import com.bytecoder.vplay.backend.data.models.MediaItemModel
+import com.bytecoder.vplay.backend.managers.MusicLibraryManager
 
 class PlaybackQueueViewModel : ViewModel() {
+    private var musicLibraryManager: MusicLibraryManager? = null
+    
+    fun setMusicLibraryManager(context: Context) {
+        if (musicLibraryManager == null) {
+            musicLibraryManager = MusicLibraryManager(context)
+        }
+    }
+    
     private val _queue = MutableLiveData<List<MediaItemModel>>(emptyList())
     val queue: LiveData<List<MediaItemModel>> = _queue
 
@@ -28,7 +40,7 @@ class PlaybackQueueViewModel : ViewModel() {
     private val _isShuffleEnabled = MutableLiveData<Boolean>(false)
     val isShuffleEnabled: LiveData<Boolean> = _isShuffleEnabled
     
-    private val _repeatMode = MutableLiveData<Int>(0) // 0 = off, 1 = all, 2 = one
+    private val _repeatMode = MutableLiveData<Int>(0)
     val repeatMode: LiveData<Int> = _repeatMode
 
     fun setQueue(items: List<MediaItemModel>, startIndex: Int = 0) {
@@ -50,42 +62,6 @@ class PlaybackQueueViewModel : ViewModel() {
         if ((_currentIndex.value ?: -1) == -1 && list.isNotEmpty()) _currentIndex.value = 0
     }
 
-    fun setCurrentIndex(index: Int) {
-        val list = _queue.value ?: return
-        if (index in list.indices) {
-            _currentIndex.value = index
-            _currentMedia.value = list[index]
-        }
-    }
-
-    fun moveItem(from: Int, to: Int) {
-        val list = _queue.value?.toMutableList() ?: return
-        if (from !in list.indices || to !in list.indices) return
-        val item = list.removeAt(from)
-        list.add(to, item)
-        _queue.value = list
-        // Adjust current index if needed
-        val ci = _currentIndex.value ?: return
-        _currentIndex.value = when {
-            from == ci -> to
-            from < ci && to >= ci -> ci - 1
-            from > ci && to <= ci -> ci + 1
-            else -> ci
-        }
-    }
-
-    fun skipNext() {
-        val list = _queue.value ?: return
-        val ci = _currentIndex.value ?: return
-        if (ci + 1 < list.size) _currentIndex.value = ci + 1
-    }
-
-    fun skipPrevious() {
-        val ci = _currentIndex.value ?: return
-        if (ci - 1 >= 0) _currentIndex.value = ci - 1
-    }
-    
-    // Online content support
     fun playOnlineContent(content: OnlineContentModel) {
         val mediaItem = MediaItemModel(
             id = content.id,
@@ -98,18 +74,6 @@ class PlaybackQueueViewModel : ViewModel() {
         setQueue(listOf(mediaItem), 0)
     }
     
-    fun addOnlineContentToQueue(content: OnlineContentModel) {
-        val mediaItem = MediaItemModel(
-            id = content.id,
-            title = content.title,
-            subtitle = content.channel,
-            uri = content.streamUrl,
-            isVideo = content.type == "video" || content.type == "live",
-            durationMs = parseDurationToMs(content.duration)
-        )
-        addToQueue(mediaItem)
-    }
-    
     private fun parseDurationToMs(duration: String): Long {
         return try {
             when {
@@ -117,12 +81,12 @@ class PlaybackQueueViewModel : ViewModel() {
                 duration.contains(":") -> {
                     val parts = duration.split(":")
                     when (parts.size) {
-                        2 -> { // mm:ss
+                        2 -> {
                             val minutes = parts[0].toLong()
                             val seconds = parts[1].toLong()
                             (minutes * 60 + seconds) * 1000
                         }
-                        3 -> { // hh:mm:ss
+                        3 -> {
                             val hours = parts[0].toLong()
                             val minutes = parts[1].toLong()
                             val seconds = parts[2].toLong()
@@ -138,17 +102,75 @@ class PlaybackQueueViewModel : ViewModel() {
         }
     }
     
-    // Playback control methods
-    fun play() {
-        _isPlaying.value = true
+    fun saveQueueAsPlaylist(name: String) {
+        val currentQueue = _queue.value ?: return
+        if (currentQueue.isEmpty()) return
+        
+        val manager = musicLibraryManager ?: return
+        
+        viewModelScope.launch {
+            try {
+                val playlistId = manager.createPlaylist(
+                    name = name,
+                    description = "Created from playback queue"
+                )
+                
+                if (playlistId.isNotEmpty()) {
+                    currentQueue.forEach { mediaItem ->
+                        manager.addTrackToPlaylist(playlistId, mediaItem.id)
+                    }
+                }
+            } catch (e: Exception) {
+                // Handle error
+            }
+        }
+    }
+    
+    fun addOnlineContentToQueue(content: OnlineContentModel) {
+        val mediaItem = MediaItemModel(
+            id = content.id,
+            title = content.title,
+            subtitle = content.channel,
+            uri = content.streamUrl,
+            isVideo = content.type == "video" || content.type == "live",
+            durationMs = parseDurationToMs(content.duration)
+        )
+        addToQueue(mediaItem)
+    }
+    
+    fun setCurrentIndex(index: Int) {
+        val list = _queue.value ?: return
+        if (index in list.indices) {
+            _currentIndex.value = index
+            _currentMedia.value = list[index]
+        }
+    }
+    
+    fun seekToQueueItem(index: Int) {
+        setCurrentIndex(index)
+    }
+    
+    fun seekTo(positionMs: Long) {
+        _currentPosition.value = positionMs
+    }
+    
+    fun setShuffleMode(enabled: Boolean) {
+        _isShuffleEnabled.value = enabled
+    }
+    
+    fun skipToPrevious() {
+        val currentIndex = _currentIndex.value ?: return
+        if (currentIndex > 0) {
+            setCurrentIndex(currentIndex - 1)
+        }
     }
     
     fun pause() {
         _isPlaying.value = false
     }
     
-    fun seekTo(positionMs: Long) {
-        _currentPosition.value = positionMs
+    fun play() {
+        _isPlaying.value = true
     }
     
     fun skipToNext() {
@@ -159,21 +181,6 @@ class PlaybackQueueViewModel : ViewModel() {
         }
     }
     
-    fun skipToPrevious() {
-        val currentIndex = _currentIndex.value ?: return
-        if (currentIndex > 0) {
-            setCurrentIndex(currentIndex - 1)
-        }
-    }
-    
-    fun seekToQueueItem(index: Int) {
-        setCurrentIndex(index)
-    }
-    
-    fun setShuffleMode(enabled: Boolean) {
-        _isShuffleEnabled.value = enabled
-    }
-    
     fun setRepeatMode(mode: Int) {
         _repeatMode.value = mode
     }
@@ -182,6 +189,9 @@ class PlaybackQueueViewModel : ViewModel() {
         _queue.value = emptyList()
         _currentIndex.value = -1
         _currentMedia.value = null
+        _isPlaying.value = false
+        _currentPosition.value = 0L
+        _duration.value = 0L
     }
     
     fun removeFromQueue(index: Int) {
@@ -204,8 +214,19 @@ class PlaybackQueueViewModel : ViewModel() {
         }
     }
     
-    fun saveQueueAsPlaylist(name: String) {
-        // TODO: Implement save queue as playlist functionality
-        // This would typically involve saving to Room database
+    fun moveItem(from: Int, to: Int) {
+        val list = _queue.value?.toMutableList() ?: return
+        if (from !in list.indices || to !in list.indices) return
+        val item = list.removeAt(from)
+        list.add(to, item)
+        _queue.value = list
+        
+        val ci = _currentIndex.value ?: return
+        _currentIndex.value = when {
+            from == ci -> to
+            from < ci && to >= ci -> ci - 1
+            from > ci && to <= ci -> ci + 1
+            else -> ci
+        }
     }
 }

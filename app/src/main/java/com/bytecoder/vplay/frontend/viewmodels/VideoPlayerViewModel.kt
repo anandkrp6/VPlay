@@ -67,6 +67,17 @@ class VideoPlayerViewModel(application: Application) : AndroidViewModel(applicat
                 _subtitlesEnabled.value = currentSelected != null
             }
         }
+        
+        // Sync with PlayerManager state
+        PlayerManager.isPlaying.observeForever { isPlaying ->
+            _isPlaying.value = isPlaying
+        }
+        PlayerManager.position.observeForever { position ->
+            _currentPosition.value = position
+        }
+        PlayerManager.duration.observeForever { duration ->
+            _duration.value = duration
+        }
     }
     
     fun play() {
@@ -86,7 +97,7 @@ class VideoPlayerViewModel(application: Application) : AndroidViewModel(applicat
     fun seekTo(position: Long) {
         viewModelScope.launch {
             _currentPosition.value = position
-            // Note: PlayerManager doesn't expose seekTo directly, would need to access player
+            PlayerManager.seekTo(position)
         }
     }
     

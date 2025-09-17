@@ -184,6 +184,10 @@ object PlayerManager {
 
     fun next() { player?.seekToNext() }
     fun previous() { player?.seekToPrevious() }
+    
+    fun seekTo(positionMs: Long) {
+        player?.seekTo(positionMs)
+    }
 
     fun hasActivePlayback(): Boolean {
         val p = player
