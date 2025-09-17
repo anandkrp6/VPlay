@@ -3,6 +3,7 @@ package com.bytecoder.vplay.frontend.ui.player
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -32,8 +33,12 @@ import androidx.navigation.NavController
 import com.bytecoder.vplay.backend.managers.SubtitleTrack
 import com.bytecoder.vplay.frontend.viewmodels.PlaybackQueueViewModel
 import com.bytecoder.vplay.frontend.viewmodels.VideoPlayerViewModel
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.ui.PlayerView
 import kotlin.math.abs
 
+@OptIn(UnstableApi::class)
 @Composable
 fun VideoPlayerScreen(
     videoId: String,
@@ -166,30 +171,17 @@ fun VideoPlayerScreen(
                 },
             contentAlignment = Alignment.Center
         ) {
-            // Video player placeholder
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(
-                    Icons.Default.PlayCircle,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(64.dp)
-                )
-                Text(
-                    text = "Video Player (ID: $videoId)",
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(top = 16.dp)
-                )
-                Text(
-                    text = "• Single tap: Show/hide controls\n• Double tap left: Rewind 10s\n• Double tap right: Forward 10s\n• Swipe left edge: Brightness\n• Swipe right edge: Volume",
-                    color = Color.White.copy(alpha = 0.7f),
-                    style = MaterialTheme.typography.bodySmall,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
+            // Actual ExoPlayer PlayerView
+            AndroidView(
+                factory = { ctx ->
+                    PlayerView(ctx).apply {
+                        player = videoPlayerViewModel.initializePlayer()
+                        useController = false // We'll use our custom controls
+                        setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
+                    }
+                },
+                modifier = Modifier.fillMaxSize()
+            )
         }
 
         // Top controls bar (visible when controlsVisible is true)

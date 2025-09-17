@@ -147,6 +147,8 @@ class VideoPlayerViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
     
+    fun initializePlayer() = advancedPlayerManager.initializePlayer()
+    
     fun playMedia(media: MediaItemModel) {
         viewModelScope.launch {
             _currentMedia.value = media
