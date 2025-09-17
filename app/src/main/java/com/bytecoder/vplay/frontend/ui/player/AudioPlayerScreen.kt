@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Spacer
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import com.bytecoder.vplay.backend.managers.MusicLibraryManager
+import com.bytecoder.vplay.backend.managers.PlayerManager
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -147,6 +148,13 @@ fun AudioPlayerScreen(
             repeatMode = RepeatMode.Restart
         )
     )
+
+    // Sync queue changes with PlayerManager
+    LaunchedEffect(queue, currentIndex) {
+        if (queue.isNotEmpty() && currentIndex >= 0) {
+            PlayerManager.rebuildFromQueue(context, queue, currentIndex)
+        }
+    }
 
     VPlayTheme {
         BottomSheetScaffold(

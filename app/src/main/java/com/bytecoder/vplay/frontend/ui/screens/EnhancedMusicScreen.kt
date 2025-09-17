@@ -48,6 +48,16 @@ fun EnhancedMusicScreen(
     
     var selectedMode by remember { mutableStateOf(TabMode.LIBRARY) }
     var showCreatePlaylistDialog by remember { mutableStateOf(false) }
+    var showSearch by remember { mutableStateOf(false) }
+    var showSortMenu by remember { mutableStateOf(false) }
+    
+    val sortOptions = listOf(
+        "title" to "Title",
+        "artist" to "Artist",
+        "album" to "Album", 
+        "duration" to "Duration",
+        "date_added" to "Date Added"
+    )
     
     // Collect state from ViewModel
     val tracks by musicLibraryViewModel.tracks.collectAsStateWithLifecycle()
@@ -82,6 +92,55 @@ fun EnhancedMusicScreen(
                 color = MaterialTheme.colorScheme.primary
             )
             Row {
+                IconButton(
+                    onClick = { showSearch = !showSearch }
+                ) {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = "Search Music",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                Box {
+                    IconButton(
+                        onClick = { showSortMenu = true }
+                    ) {
+                        Icon(
+                            Icons.Default.Sort,
+                            contentDescription = "Sort Music",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = showSortMenu,
+                        onDismissRequest = { showSortMenu = false }
+                    ) {
+                        sortOptions.forEach { (value, label) ->
+                            DropdownMenuItem(
+                                text = { 
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(label)
+                                        if (musicLibraryViewModel.currentSortOption == value) {
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Icon(
+                                                Icons.Default.Check,
+                                                contentDescription = "Selected",
+                                                modifier = Modifier.size(16.dp),
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    }
+                                },
+                                onClick = {
+                                    musicLibraryViewModel.updateSortOption(value)
+                                    showSortMenu = false
+                                }
+                            )
+                        }
+                    }
+                }
                 if (selectedMode == TabMode.PLAYLISTS) {
                     IconButton(onClick = { showCreatePlaylistDialog = true }) {
                         Icon(
@@ -101,6 +160,35 @@ fun EnhancedMusicScreen(
                     )
                 }
             }
+        }
+        
+        // Search bar
+        androidx.compose.animation.AnimatedVisibility(
+            visible = showSearch,
+            enter = androidx.compose.animation.slideInVertically() + androidx.compose.animation.fadeIn(),
+            exit = androidx.compose.animation.slideOutVertically() + androidx.compose.animation.fadeOut()
+        ) {
+            OutlinedTextField(
+                value = musicLibraryViewModel.searchQuery,
+                onValueChange = { musicLibraryViewModel.updateSearchQuery(it) },
+                label = { Text("Search music...") },
+                leadingIcon = {
+                    Icon(Icons.Default.Search, contentDescription = null)
+                },
+                trailingIcon = {
+                    if (musicLibraryViewModel.searchQuery.isNotEmpty()) {
+                        IconButton(
+                            onClick = { musicLibraryViewModel.updateSearchQuery("") }
+                        ) {
+                            Icon(Icons.Default.Clear, contentDescription = "Clear search")
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                singleLine = true
+            )
         }
         
         // Tab row for Library/Playlists

@@ -8,15 +8,21 @@ import com.bytecoder.vplay.backend.managers.MusicTrack
 import com.bytecoder.vplay.backend.managers.MusicAlbum
 import com.bytecoder.vplay.backend.managers.MusicArtist
 import com.bytecoder.vplay.backend.managers.MusicPlaylist
+import com.bytecoder.vplay.backend.utils.MediaStoreObserver
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.async
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 
 class MusicLibraryViewModel : ViewModel() {
     private var musicLibraryManager: MusicLibraryManager? = null
+    private var mediaObserver: MediaStoreObserver? = null
     
+    private val _allTracks = MutableStateFlow<List<MusicTrack>>(emptyList())
     private val _tracks = MutableStateFlow<List<MusicTrack>>(emptyList())
     val tracks: StateFlow<List<MusicTrack>> = _tracks.asStateFlow()
     
@@ -35,9 +41,22 @@ class MusicLibraryViewModel : ViewModel() {
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
     
+    var searchQuery by mutableStateOf("")
+        private set
+        
+    var currentSortOption by mutableStateOf("title")
+        private set
+    
     fun initialize(context: Context) {
         if (musicLibraryManager == null) {
             musicLibraryManager = MusicLibraryManager(context)
+            mediaObserver = MediaStoreObserver(context) { mediaType ->
+                if (mediaType == MediaStoreObserver.MediaType.AUDIO || 
+                    mediaType == MediaStoreObserver.MediaType.BOTH) {
+                    refreshLibrary()
+                }
+            }
+            mediaObserver?.startObserving()
             refreshLibrary()
         }
     }
@@ -56,7 +75,9 @@ class MusicLibraryViewModel : ViewModel() {
                 val artistsDeferred = async { manager.getAllArtists() }
                 val playlistsDeferred = async { manager.getAllPlaylists() }
                 
-                _tracks.value = tracksDeferred.await()
+                val loadedTracks = tracksDeferred.await()
+                _allTracks.value = loadedTracks
+                filterAndSortTracks() // Apply current search and sort
                 _albums.value = albumsDeferred.await()
                 _artists.value = artistsDeferred.await()
                 _playlists.value = playlistsDeferred.await()
@@ -143,5 +164,49 @@ class MusicLibraryViewModel : ViewModel() {
     
     fun clearError() {
         _error.value = null
+    }
+    
+    fun updateSearchQuery(query: String) {
+        searchQuery = query
+        filterAndSortTracks()
+    }
+    
+    fun updateSortOption(sortType: String) {
+        if (currentSortOption != sortType) {
+            currentSortOption = sortType
+            filterAndSortTracks()
+        }
+    }
+    
+    private fun filterAndSortTracks() {
+        val query = searchQuery.trim()
+        val filteredTracks = if (query.isEmpty()) {
+            _allTracks.value
+        } else {
+            _allTracks.value.filter { track ->
+                track.title.contains(query, ignoreCase = true) ||
+                track.artist.contains(query, ignoreCase = true) ||
+                track.album.contains(query, ignoreCase = true)
+            }
+        }
+        
+        // Apply sorting
+        _tracks.value = applySorting(filteredTracks, currentSortOption)
+    }
+    
+    private fun applySorting(tracks: List<MusicTrack>, sortType: String): List<MusicTrack> {
+        return when (sortType) {
+            "title" -> tracks.sortedBy { it.title.lowercase() }
+            "artist" -> tracks.sortedBy { it.artist.lowercase() }
+            "album" -> tracks.sortedBy { it.album.lowercase() }
+            "duration" -> tracks.sortedByDescending { it.duration }
+            "date_added" -> tracks.sortedByDescending { it.dateAdded }
+            else -> tracks
+        }
+    }
+    
+    override fun onCleared() {
+        super.onCleared()
+        mediaObserver?.stopObserving()
     }
 }
