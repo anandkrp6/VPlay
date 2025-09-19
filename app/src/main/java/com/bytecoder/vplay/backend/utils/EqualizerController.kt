@@ -6,7 +6,6 @@ import android.media.audiofx.Virtualizer
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
-import com.bytecoder.vplay.backend.managers.PlayerManager
 
 object EqualizerController {
     private var eq: Equalizer? = null
@@ -92,3 +91,5 @@ object EqualizerController {
         sessionId = 0
     }
 }
+
+

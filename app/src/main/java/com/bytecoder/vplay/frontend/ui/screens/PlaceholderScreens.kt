@@ -14,28 +14,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import androidx.navigation.NavController
 import com.bytecoder.vplay.backend.data.models.MediaItemModel
-import com.bytecoder.vplay.frontend.viewmodels.PlaybackQueueViewModel
-import com.bytecoder.vplay.frontend.viewmodels.VideosViewModel
+import com.bytecoder.vplay.backend.managers.PlaybackQueueManager
+import com.bytecoder.vplay.backend.managers.VideoLibraryScreenManager
 import com.bytecoder.vplay.TabMode
 import com.bytecoder.vplay.frontend.ui.components.EqualizerDialog
 
 @Composable
 fun VideosScreen(
-    queueViewModel: PlaybackQueueViewModel,
+    queueManager: PlaybackQueueManager,
     navController: NavController
 ) {
-    val videosViewModel: VideosViewModel = viewModel()
-    val videos by videosViewModel.videos.collectAsState()
-    val isLoading by videosViewModel.isLoading.collectAsState()
-    val error by videosViewModel.error.collectAsState()
-    val permissionDenied by videosViewModel.permissionDenied.collectAsState()
+    val VideoLibraryScreenManager: VideoLibraryScreenManager = viewModel()
+    val videos by VideoLibraryScreenManager.videos.collectAsState()
+    val isLoading by VideoLibraryScreenManager.isLoading.collectAsState()
+    val error by VideoLibraryScreenManager.error.collectAsState()
+    val permissionDenied by VideoLibraryScreenManager.permissionDenied.collectAsState()
     
     var selectedMode by remember { mutableStateOf(TabMode.LIBRARY) }
     var showSearch by remember { mutableStateOf(false) }
@@ -95,7 +94,7 @@ fun VideosScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(label)
-                                        if (videosViewModel.currentSortOption == value) {
+                                        if (VideoLibraryScreenManager.currentSortOption == value) {
                                             Spacer(modifier = Modifier.width(8.dp))
                                             Icon(
                                                 Icons.Default.Check,
@@ -107,7 +106,7 @@ fun VideosScreen(
                                     }
                                 },
                                 onClick = {
-                                    videosViewModel.updateSortOption(value)
+                                    VideoLibraryScreenManager.updateSortOption(value)
                                     showSortMenu = false
                                 }
                             )
@@ -116,7 +115,7 @@ fun VideosScreen(
                 }
                 IconButton(
                     onClick = { 
-                        videosViewModel.refreshVideos()
+                        VideoLibraryScreenManager.refreshVideos()
                     }
                 ) {
                     Icon(
@@ -135,16 +134,16 @@ fun VideosScreen(
             exit = androidx.compose.animation.slideOutVertically() + androidx.compose.animation.fadeOut()
         ) {
             OutlinedTextField(
-                value = videosViewModel.searchQuery,
-                onValueChange = { videosViewModel.updateSearchQuery(it) },
+                value = VideoLibraryScreenManager.searchQuery,
+                onValueChange = { VideoLibraryScreenManager.updateSearchQuery(it) },
                 label = { Text("Search videos...") },
                 leadingIcon = {
                     Icon(Icons.Default.Search, contentDescription = null)
                 },
                 trailingIcon = {
-                    if (videosViewModel.searchQuery.isNotEmpty()) {
+                    if (VideoLibraryScreenManager.searchQuery.isNotEmpty()) {
                         IconButton(
-                            onClick = { videosViewModel.updateSearchQuery("") }
+                            onClick = { VideoLibraryScreenManager.updateSearchQuery("") }
                         ) {
                             Icon(Icons.Default.Clear, contentDescription = "Clear search")
                         }
@@ -188,10 +187,10 @@ fun VideosScreen(
                     permissionDenied = permissionDenied,
                     onVideoClick = { video ->
                         // Set video in queue and navigate to video player
-                        queueViewModel.setQueue(listOf(video), 0)
+                        queueManager.setQueue(listOf(video), 0)
                         navController.navigate("video_player")
                     },
-                    onRetry = { videosViewModel.refreshVideos() },
+                    onRetry = { VideoLibraryScreenManager.refreshVideos() },
                     onRequestPermission = { 
                         // Navigate to permissions screen
                         navController.navigate("permissions")
@@ -405,12 +404,12 @@ private fun VideoPlaylistsContent() {
 
 @Composable
 fun MusicScreen(
-    queueViewModel: PlaybackQueueViewModel,
+    queueManager: PlaybackQueueManager,
     navController: NavController
 ) {
     // Use the enhanced music screen implementation
     EnhancedMusicScreen(
-        queueViewModel = queueViewModel,
+        queueManager = queueViewModel,
         navController = navController
     )
 }
@@ -548,7 +547,7 @@ private fun MusicPlaylistsContent() {
 
 @Composable
 fun OnlineScreen(
-    queueViewModel: PlaybackQueueViewModel,
+    queueManager: PlaybackQueueManager,
     navController: NavController
 ) {
     var selectedMode by remember { mutableStateOf(TabMode.LIBRARY) }
@@ -716,7 +715,7 @@ private fun OnlineSavedContent() {
 
 @Composable
 fun ToolsScreen(
-    queueViewModel: PlaybackQueueViewModel,
+    queueManager: PlaybackQueueManager,
     navController: NavController
 ) {
     var showEqualizerDialog by remember { mutableStateOf(false) }
@@ -1083,3 +1082,5 @@ private fun VideoItem(
         }
     }
 }
+
+

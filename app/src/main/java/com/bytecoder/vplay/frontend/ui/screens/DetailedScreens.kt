@@ -8,14 +8,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.bytecoder.vplay.frontend.viewmodels.PlaybackQueueViewModel
+import com.bytecoder.vplay.backend.managers.PlaybackQueueManager
 
 @Composable
 fun DownloadsScreen(
-    queueViewModel: PlaybackQueueViewModel,
+    queueManager: PlaybackQueueManager,
     navController: NavController
 ) {
     Column(
@@ -40,7 +39,7 @@ fun DownloadsScreen(
 
 @Composable
 fun FileExplorerScreen(
-    queueViewModel: PlaybackQueueViewModel,
+    queueManager: PlaybackQueueManager,
     navController: NavController
 ) {
     Column(
@@ -65,7 +64,7 @@ fun FileExplorerScreen(
 
 @Composable
 fun PrivacyManagerScreen(
-    queueViewModel: PlaybackQueueViewModel,
+    queueManager: PlaybackQueueManager,
     navController: NavController
 ) {
     LazyColumn(
@@ -120,7 +119,7 @@ fun PrivacyManagerScreen(
 
 @Composable
 fun MediaToolsScreen(
-    queueViewModel: PlaybackQueueViewModel,
+    queueManager: PlaybackQueueManager,
     navController: NavController
 ) {
     LazyColumn(
@@ -386,4 +385,6 @@ fun PrivacyCard(
         }
     }
 }
+
+
 

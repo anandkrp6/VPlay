@@ -376,3 +376,5 @@ private data class PermissionInfo(
     val isRequired: Boolean,
     val rationale: String
 )
+
+

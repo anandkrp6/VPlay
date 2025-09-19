@@ -2,7 +2,6 @@ package com.bytecoder.vplay.frontend.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -16,34 +15,33 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.bytecoder.vplay.frontend.viewmodels.PlaybackQueueViewModel
-import com.bytecoder.vplay.frontend.viewmodels.PlaylistDetailViewModel
+import com.bytecoder.vplay.backend.managers.PlaybackQueueManager
+import com.bytecoder.vplay.backend.managers.PlaylistScreenManager
 import com.bytecoder.vplay.backend.managers.MusicTrack
 import com.bytecoder.vplay.backend.managers.MusicPlaylist
 import com.bytecoder.vplay.backend.data.models.MediaItemModel
-import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaylistDetailScreen(
     playlistId: String,
-    queueViewModel: PlaybackQueueViewModel,
+    queueManager: PlaybackQueueManager,
     navController: NavController,
-    playlistDetailViewModel: PlaylistDetailViewModel = viewModel()
+    PlaylistScreenManager: PlaylistScreenManager = viewModel()
 ) {
     val context = LocalContext.current
     
     // Initialize the view model
     LaunchedEffect(playlistId) {
-        playlistDetailViewModel.initialize(context, playlistId)
+        PlaylistScreenManager.initialize(context, playlistId)
     }
     
     // Collect state from ViewModel
-    val playlist by playlistDetailViewModel.playlist.collectAsStateWithLifecycle()
-    val tracks by playlistDetailViewModel.tracks.collectAsStateWithLifecycle()
-    val isLoading by playlistDetailViewModel.isLoading.collectAsStateWithLifecycle()
-    val error by playlistDetailViewModel.error.collectAsStateWithLifecycle()
+    val playlist by PlaylistScreenManager.playlist.collectAsStateWithLifecycle()
+    val tracks by PlaylistScreenManager.tracks.collectAsStateWithLifecycle()
+    val isLoading by PlaylistScreenManager.isLoading.collectAsStateWithLifecycle()
+    val error by PlaylistScreenManager.error.collectAsStateWithLifecycle()
     
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
@@ -52,7 +50,7 @@ fun PlaylistDetailScreen(
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             // Show snackbar or handle error
-            playlistDetailViewModel.clearError()
+            PlaylistScreenManager.clearError()
         }
     }
     
@@ -143,7 +141,7 @@ fun PlaylistDetailScreen(
                             thumbnailPath = track.albumArtPath
                         )
                     }
-                    queueViewModel.setQueue(mediaItems, 0)
+                    queueManager.setQueue(mediaItems, 0)
                     navController.navigate("audio_player")
                 }
             ) {
@@ -231,11 +229,11 @@ fun PlaylistDetailScreen(
                                     thumbnailPath = t.albumArtPath
                                 )
                             }
-                            queueViewModel.setQueue(mediaItems, index)
+                            queueManager.setQueue(mediaItems, index)
                             navController.navigate("audio_player")
                         },
                         onRemove = {
-                            playlistDetailViewModel.removeTrackFromPlaylist(track.id)
+                            PlaylistScreenManager.removeTrackFromPlaylist(track.id)
                         }
                     )
                 }
@@ -254,7 +252,7 @@ fun PlaylistDetailScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        playlistDetailViewModel.deletePlaylist()
+                        PlaylistScreenManager.deletePlaylist()
                         showDeleteDialog = false
                         navController.popBackStack()
                     }
@@ -276,7 +274,7 @@ fun PlaylistDetailScreen(
             playlist = playlist!!,
             onDismiss = { showEditDialog = false },
             onConfirm = { name, description ->
-                playlistDetailViewModel.updatePlaylist(name, description)
+                PlaylistScreenManager.updatePlaylist(name, description)
                 showEditDialog = false
             }
         )
@@ -431,3 +429,5 @@ private fun formatDuration(durationMs: Long): String {
     val seconds = totalSeconds % 60
     return String.format("%d:%02d", minutes, seconds)
 }
+
+

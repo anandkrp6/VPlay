@@ -374,3 +374,5 @@ enum class AudioQuality(val displayName: String, val bitrate: Int) {
     HIGH("High (320kbps)", 320),
     LOSSLESS("Lossless", 0)
 }
+
+

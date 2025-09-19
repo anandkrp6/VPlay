@@ -1,4 +1,4 @@
-package com.bytecoder.vplay.frontend.ui.player
+package com.bytecoder.vplay.frontend.ui.screens.player
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -31,8 +31,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.bytecoder.vplay.backend.managers.SubtitleTrack
-import com.bytecoder.vplay.frontend.viewmodels.PlaybackQueueViewModel
-import com.bytecoder.vplay.frontend.viewmodels.VideoPlayerViewModel
+import com.bytecoder.vplay.backend.managers.PlaybackQueueManager
+import com.bytecoder.vplay.backend.managers.VideoPlayerScreenManager
+import com.bytecoder.vplay.backend.managers.VideoLibraryScreenManager
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
@@ -42,9 +43,10 @@ import kotlin.math.abs
 @Composable
 fun VideoPlayerScreen(
     videoId: String,
-    queueViewModel: PlaybackQueueViewModel,
+    queueManager: PlaybackQueueManager,
     navController: NavController,
-    videoPlayerViewModel: VideoPlayerViewModel = viewModel()
+    videoPlayerScreenManager: VideoPlayerScreenManager = viewModel(),
+    videoLibraryScreenManager: VideoLibraryScreenManager = viewModel()
 ) {
     val context = LocalContext.current
     var controlsVisible by remember { mutableStateOf(true) }
@@ -54,20 +56,20 @@ fun VideoPlayerScreen(
     var seekDirection by remember { mutableStateOf("") }
     
     // Collect video player state
-    val currentMedia by videoPlayerViewModel.currentMedia.collectAsState()
-    val isPlaying by videoPlayerViewModel.isPlaying.collectAsState()
-    val currentPosition by videoPlayerViewModel.currentPosition.collectAsState()
-    val duration by videoPlayerViewModel.duration.collectAsState()
-    val volume by videoPlayerViewModel.volume.collectAsState()
-    val brightness by videoPlayerViewModel.brightness.collectAsState()
-    val isMuted by videoPlayerViewModel.isMuted.collectAsState()
-    val isFullscreen by videoPlayerViewModel.isFullscreen.collectAsState()
+    val currentMedia by videoPlayerScreenManager.currentMedia.collectAsState()
+    val isPlaying by videoPlayerScreenManager.isPlaying.collectAsState()
+    val currentPosition by videoPlayerScreenManager.currentPosition.collectAsState()
+    val duration by videoPlayerScreenManager.duration.collectAsState()
+    val volume by videoPlayerScreenManager.volume.collectAsState()
+    val brightness by videoPlayerScreenManager.brightness.collectAsState()
+    val isMuted by videoPlayerScreenManager.isMuted.collectAsState()
+    val isFullscreen by videoPlayerScreenManager.isFullscreen.collectAsState()
     
     // Collect subtitle-related state
-    val availableSubtitles by videoPlayerViewModel.availableSubtitles.collectAsState()
-    val selectedSubtitleTrack by videoPlayerViewModel.selectedSubtitleTrack.collectAsState()
-    val subtitlesEnabled by videoPlayerViewModel.subtitlesEnabled.collectAsState()
-    val showSubtitleDialog by videoPlayerViewModel.showSubtitleDialog.collectAsState()
+    val availableSubtitles by videoPlayerScreenManager.availableSubtitles.collectAsState()
+    val selectedSubtitleTrack by videoPlayerScreenManager.selectedSubtitleTrack.collectAsState()
+    val subtitlesEnabled by videoPlayerScreenManager.subtitlesEnabled.collectAsState()
+    val showSubtitleDialog by videoPlayerScreenManager.showSubtitleDialog.collectAsState()
     
     // Helper function to format time
     fun formatTime(milliseconds: Long): String {
@@ -87,7 +89,16 @@ fun VideoPlayerScreen(
         uri?.let {
             // For demo purposes, we'll use "English" as default language
             // In a real app, you might want to let the user select the language
-            videoPlayerViewModel.loadExternalSubtitle(it, "English")
+            videoPlayerScreenManager.loadExternalSubtitle(it, "English")
+        }
+    }
+    
+    // Initialize video player with the video
+    LaunchedEffect(videoId) {
+        val video = videoLibraryScreenManager.getVideoById(videoId)
+        if (video != null) {
+            videoPlayerScreenManager.initializePlayer()
+            videoPlayerScreenManager.playMedia(video)
         }
     }
     
@@ -120,14 +131,14 @@ fun VideoPlayerScreen(
                                     seekDirection = "Rewind 10s"
                                     showSeekOverlay = true
                                     val newPosition = (currentPosition - 10000).coerceAtLeast(0)
-                                    videoPlayerViewModel.seekTo(newPosition)
+                                    videoPlayerScreenManager.seekTo(newPosition)
                                 }
                                 // Double tap right side - forward 10 seconds  
                                 offset.x > screenWidth * 0.7f -> {
                                     seekDirection = "Forward 10s"
                                     showSeekOverlay = true
                                     val newPosition = (currentPosition + 10000).coerceAtMost(duration)
-                                    videoPlayerViewModel.seekTo(newPosition)
+                                    videoPlayerScreenManager.seekTo(newPosition)
                                 }
                                 // Single tap center - toggle controls
                                 else -> {
@@ -151,19 +162,19 @@ fun VideoPlayerScreen(
                             if (dragAmount.x < screenWidth / 2) {
                                 // Left side - brightness control
                                 val newBrightness = (brightness - dragAmount.y / 1000f).coerceIn(0f, 1f)
-                                videoPlayerViewModel.setBrightness(newBrightness)
+                                videoPlayerScreenManager.setBrightness(newBrightness)
                                 showBrightnessOverlay = true
                             } else {
                                 // Right side - volume control
                                 val newVolume = (volume - dragAmount.y / 1000f).coerceIn(0f, 1f)
-                                videoPlayerViewModel.setVolume(newVolume)
+                                videoPlayerScreenManager.setVolume(newVolume)
                                 showVolumeOverlay = true
                             }
                         } else if (abs(dragAmount.x) > 50) {
                             // Horizontal swipe - seek forward/backward
                             val seekAmount = (dragAmount.x / screenWidth) * duration * 0.1f // 10% of duration per full swipe
                             val newPosition = (currentPosition + seekAmount.toLong()).coerceIn(0, duration)
-                            videoPlayerViewModel.seekTo(newPosition)
+                            videoPlayerScreenManager.seekTo(newPosition)
                             showSeekOverlay = true
                             seekDirection = if (dragAmount.x > 0) "Seeking Forward" else "Seeking Backward"
                         }
@@ -175,10 +186,12 @@ fun VideoPlayerScreen(
             AndroidView(
                 factory = { ctx ->
                     PlayerView(ctx).apply {
-                        player = videoPlayerViewModel.initializePlayer()
                         useController = false // We'll use our custom controls
                         setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
                     }
+                },
+                update = { playerView ->
+                    playerView.player = videoPlayerScreenManager.getPlayer()
                 },
                 modifier = Modifier.fillMaxSize()
             )
@@ -202,23 +215,23 @@ fun VideoPlayerScreen(
             modifier = Modifier.align(Alignment.BottomCenter)
         ) {
             BottomVideoControls(
-                onPreviousClick = { videoPlayerViewModel.skipToPrevious() },
+                onPreviousClick = { videoPlayerScreenManager.skipToPrevious() },
                 onPlayPauseClick = { 
-                    if (isPlaying) videoPlayerViewModel.pause() else videoPlayerViewModel.play()
+                    if (isPlaying) videoPlayerScreenManager.pause() else videoPlayerScreenManager.play()
                 },
-                onNextClick = { videoPlayerViewModel.skipToNext() },
+                onNextClick = { videoPlayerScreenManager.skipToNext() },
                 isPlaying = isPlaying,
                 currentTime = formatTime(currentPosition),
                 duration = formatTime(duration),
                 progress = progress,
                 onSeek = { newProgress ->
                     val newPosition = (newProgress * duration).toLong()
-                    videoPlayerViewModel.seekTo(newPosition)
+                    videoPlayerScreenManager.seekTo(newPosition)
                 },
                 subtitlesEnabled = subtitlesEnabled,
                 hasSubtitles = availableSubtitles.isNotEmpty(),
-                onSubtitleClick = { videoPlayerViewModel.showSubtitleDialog() },
-                onSubtitleToggle = { videoPlayerViewModel.toggleSubtitles() }
+                onSubtitleClick = { videoPlayerScreenManager.showSubtitleDialog() },
+                onSubtitleToggle = { videoPlayerScreenManager.toggleSubtitles() }
             )
         }
 
@@ -262,13 +275,13 @@ fun VideoPlayerScreen(
             availableSubtitles = availableSubtitles,
             selectedSubtitle = selectedSubtitleTrack,
             onSubtitleSelected = { track ->
-                videoPlayerViewModel.selectSubtitleTrack(track)
-                videoPlayerViewModel.hideSubtitleDialog()
+                videoPlayerScreenManager.selectSubtitleTrack(track)
+                videoPlayerScreenManager.hideSubtitleDialog()
             },
             onLoadExternalSubtitle = {
                 subtitleFilePicker.launch("*/*")
             },
-            onDismiss = { videoPlayerViewModel.hideSubtitleDialog() }
+            onDismiss = { videoPlayerScreenManager.hideSubtitleDialog() }
         )
     }
 }
@@ -701,3 +714,5 @@ private fun SubtitleOptionItem(
         }
     }
 }
+
+

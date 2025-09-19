@@ -328,3 +328,5 @@ private fun applyEqualizerSettings(frequencies: List<Float>) {
         println("Error applying equalizer settings: ${e.message}")
     }
 }
+
+

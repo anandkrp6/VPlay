@@ -21,29 +21,27 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.bytecoder.vplay.frontend.viewmodels.PlaybackQueueViewModel
-import com.bytecoder.vplay.frontend.viewmodels.MusicLibraryViewModel
+import com.bytecoder.vplay.backend.managers.PlaybackQueueManager
+import com.bytecoder.vplay.backend.managers.MusicLibraryScreenManager
 import com.bytecoder.vplay.backend.managers.MusicTrack
 import com.bytecoder.vplay.backend.managers.MusicAlbum
 import com.bytecoder.vplay.backend.managers.MusicArtist
 import com.bytecoder.vplay.backend.managers.MusicPlaylist
 import com.bytecoder.vplay.backend.data.models.MediaItemModel
 import com.bytecoder.vplay.TabMode
-import java.text.SimpleDateFormat
-import java.util.*
 
 @Composable
 fun EnhancedMusicScreen(
-    queueViewModel: PlaybackQueueViewModel,
+    queueManager: PlaybackQueueManager,
     navController: NavController,
-    musicLibraryViewModel: MusicLibraryViewModel = viewModel()
+    MusicLibraryScreenManager: MusicLibraryScreenManager = viewModel()
 ) {
     val context = LocalContext.current
     
     // Initialize the music library
     LaunchedEffect(Unit) {
-        musicLibraryViewModel.initialize(context)
-        queueViewModel.setMusicLibraryManager(context)
+        MusicLibraryScreenManager.initialize(context)
+        queueManager.setMusicLibraryManager(context)
     }
     
     var selectedMode by remember { mutableStateOf(TabMode.LIBRARY) }
@@ -60,18 +58,18 @@ fun EnhancedMusicScreen(
     )
     
     // Collect state from ViewModel
-    val tracks by musicLibraryViewModel.tracks.collectAsStateWithLifecycle()
-    val albums by musicLibraryViewModel.albums.collectAsStateWithLifecycle()
-    val artists by musicLibraryViewModel.artists.collectAsStateWithLifecycle()
-    val playlists by musicLibraryViewModel.playlists.collectAsStateWithLifecycle()
-    val isLoading by musicLibraryViewModel.isLoading.collectAsStateWithLifecycle()
-    val error by musicLibraryViewModel.error.collectAsStateWithLifecycle()
+    val tracks by MusicLibraryScreenManager.tracks.collectAsStateWithLifecycle()
+    val albums by MusicLibraryScreenManager.albums.collectAsStateWithLifecycle()
+    val artists by MusicLibraryScreenManager.artists.collectAsStateWithLifecycle()
+    val playlists by MusicLibraryScreenManager.playlists.collectAsStateWithLifecycle()
+    val isLoading by MusicLibraryScreenManager.isLoading.collectAsStateWithLifecycle()
+    val error by MusicLibraryScreenManager.error.collectAsStateWithLifecycle()
     
     // Show error snackbar
     error?.let { errorMessage ->
         LaunchedEffect(errorMessage) {
             // Show snackbar or handle error
-            musicLibraryViewModel.clearError()
+            MusicLibraryScreenManager.clearError()
         }
     }
     
@@ -122,7 +120,7 @@ fun EnhancedMusicScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(label)
-                                        if (musicLibraryViewModel.currentSortOption == value) {
+                                        if (MusicLibraryScreenManager.currentSortOption == value) {
                                             Spacer(modifier = Modifier.width(8.dp))
                                             Icon(
                                                 Icons.Default.Check,
@@ -134,7 +132,7 @@ fun EnhancedMusicScreen(
                                     }
                                 },
                                 onClick = {
-                                    musicLibraryViewModel.updateSortOption(value)
+                                    MusicLibraryScreenManager.updateSortOption(value)
                                     showSortMenu = false
                                 }
                             )
@@ -151,7 +149,7 @@ fun EnhancedMusicScreen(
                     }
                 }
                 IconButton(
-                    onClick = { musicLibraryViewModel.refreshLibrary() }
+                    onClick = { MusicLibraryScreenManager.refreshLibrary() }
                 ) {
                     Icon(
                         Icons.Default.Refresh,
@@ -169,16 +167,16 @@ fun EnhancedMusicScreen(
             exit = androidx.compose.animation.slideOutVertically() + androidx.compose.animation.fadeOut()
         ) {
             OutlinedTextField(
-                value = musicLibraryViewModel.searchQuery,
-                onValueChange = { musicLibraryViewModel.updateSearchQuery(it) },
+                value = MusicLibraryScreenManager.searchQuery,
+                onValueChange = { MusicLibraryScreenManager.updateSearchQuery(it) },
                 label = { Text("Search music...") },
                 leadingIcon = {
                     Icon(Icons.Default.Search, contentDescription = null)
                 },
                 trailingIcon = {
-                    if (musicLibraryViewModel.searchQuery.isNotEmpty()) {
+                    if (MusicLibraryScreenManager.searchQuery.isNotEmpty()) {
                         IconButton(
-                            onClick = { musicLibraryViewModel.updateSearchQuery("") }
+                            onClick = { MusicLibraryScreenManager.updateSearchQuery("") }
                         ) {
                             Icon(Icons.Default.Clear, contentDescription = "Clear search")
                         }
@@ -228,11 +226,11 @@ fun EnhancedMusicScreen(
                             durationMs = track.duration,
                             thumbnailPath = track.albumArtPath
                         )
-                        queueViewModel.setQueue(listOf(mediaItem), 0)
+                        queueManager.setQueue(listOf(mediaItem), 0)
                         navController.navigate("audio_player")
                     },
                     onTrackFavorite = { trackId ->
-                        musicLibraryViewModel.toggleFavorite(trackId)
+                        MusicLibraryScreenManager.toggleFavorite(trackId)
                     },
                     navController = navController
                 )
@@ -243,7 +241,7 @@ fun EnhancedMusicScreen(
                         navController.navigate("playlist_detail/${playlist.id}")
                     },
                     onDeletePlaylist = { playlistId ->
-                        musicLibraryViewModel.deletePlaylist(playlistId)
+                        MusicLibraryScreenManager.deletePlaylist(playlistId)
                     }
                 )
             }
@@ -264,7 +262,7 @@ fun EnhancedMusicScreen(
         CreatePlaylistDialog(
             onDismiss = { showCreatePlaylistDialog = false },
             onConfirm = { name, description ->
-                musicLibraryViewModel.createPlaylist(name, description)
+                MusicLibraryScreenManager.createPlaylist(name, description)
                 showCreatePlaylistDialog = false
             }
         )
@@ -749,3 +747,5 @@ private fun formatDuration(durationMs: Long): String {
     val seconds = totalSeconds % 60
     return String.format("%d:%02d", minutes, seconds)
 }
+
+

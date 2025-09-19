@@ -306,3 +306,5 @@ interface MusicPlaylistTrackDao {
     @Query("SELECT MAX(position) FROM music_playlist_tracks WHERE playlistId = :playlistId")
     suspend fun getMaxPosition(playlistId: String): Int?
 }
+
+

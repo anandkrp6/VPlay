@@ -17,9 +17,13 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
-import com.bytecoder.vplay.frontend.viewmodels.PlaybackQueueViewModel
+import com.bytecoder.vplay.backend.managers.PlaybackQueueManager
 import com.bytecoder.vplay.frontend.ui.screens.*
 import com.bytecoder.vplay.frontend.ui.player.*
+import com.bytecoder.vplay.frontend.ui.screens.player.MiniPlayerScreen
+import com.bytecoder.vplay.backend.controllers.PlayerController
+import com.bytecoder.vplay.frontend.ui.screens.navscreens.OptionsScreen
+import com.bytecoder.vplay.frontend.ui.screens.player.AudioPlayerScreen
 
 // Tab mode for content tabs
 enum class TabMode {
@@ -55,7 +59,7 @@ sealed class VPlayScreen(val route: String, val title: String, val icon: ImageVe
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VPlayApp(
-    queueViewModel: PlaybackQueueViewModel,
+    queueManager: PlaybackQueueManager,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -237,13 +241,13 @@ fun VPlayApp(
                 modifier = Modifier.fillMaxSize()
             ) {
                 composable(VPlayScreen.Video.route) {
-                    VideosScreen(queueViewModel = queueViewModel, navController = navController)
+                    VideosScreen(queueManager = queueViewModel, navController = navController)
                 }
                 composable(VPlayScreen.Music.route) {
-                    MusicScreen(queueViewModel = queueViewModel, navController = navController)
+                    MusicScreen(queueManager = queueViewModel, navController = navController)
                 }
                 composable(VPlayScreen.Online.route) {
-                    OnlineScreen(queueViewModel = queueViewModel, navController = navController)
+                    OnlineScreen(queueManager = queueViewModel, navController = navController)
                 }
                 composable(VPlayScreen.Options.route) {
                     OptionsScreen(navController = navController)
@@ -254,29 +258,29 @@ fun VPlayApp(
             
             // Detailed screens
             composable(VPlayScreen.AudioPlayer.route) {
-                AudioPlayerScreen(queueViewModel = queueViewModel, navController = navController)
+                AudioPlayerScreen(queueManager = queueViewModel, navController = navController)
             }
             composable(
                 VPlayScreen.VideoPlayer.route,
                 arguments = listOf(navArgument("videoId") { type = NavType.StringType })
             ) { backStackEntry ->
                 val videoId = backStackEntry.arguments?.getString("videoId") ?: ""
-                VideoPlayerScreen(videoId = videoId, queueViewModel = queueViewModel, navController = navController)
+                VideoPlayerScreen(videoId = videoId, queueManager = queueViewModel, navController = navController)
             }
             composable(VPlayScreen.Queue.route) {
-                QueueScreen(queueViewModel = queueViewModel, navController = navController)
+                QueueScreen(queueManager = queueViewModel, navController = navController)
             }
             composable(VPlayScreen.Downloads.route) {
-                DownloadsScreen(queueViewModel = queueViewModel, navController = navController)
+                DownloadsScreen(queueManager = queueViewModel, navController = navController)
             }
             composable(VPlayScreen.FileExplorer.route) {
-                FileExplorerScreen(queueViewModel = queueViewModel, navController = navController)
+                FileExplorerScreen(queueManager = queueViewModel, navController = navController)
             }
             composable(VPlayScreen.PrivacyManager.route) {
-                PrivacyManagerScreen(queueViewModel = queueViewModel, navController = navController)
+                PrivacyManagerScreen(queueManager = queueViewModel, navController = navController)
             }
             composable(VPlayScreen.MediaTools.route) {
-                MediaToolsScreen(queueViewModel = queueViewModel, navController = navController)
+                MediaToolsScreen(queueManager = queueViewModel, navController = navController)
             }
             
             // New option screens
@@ -300,7 +304,7 @@ fun VPlayApp(
             composable("search") {
                 SearchScreen(
                     navController = navController,
-                    queueViewModel = queueViewModel
+                    queueManager = queueViewModel
                 )
             }
             
@@ -312,7 +316,7 @@ fun VPlayApp(
                 val playlistId = backStackEntry.arguments?.getString("playlistId") ?: ""
                 PlaylistDetailScreen(
                     playlistId = playlistId,
-                    queueViewModel = queueViewModel,
+                    queueManager = queueViewModel,
                     navController = navController
                 )
             }
@@ -337,20 +341,23 @@ fun VPlayApp(
                 LyricsScreen(
                     mediaId = mediaId,
                     navController = navController,
-                    queueViewModel = queueViewModel
+                    queueManager = queueViewModel
                 )
             }
         }
         
         // Mini-player overlay
-        MiniPlayer(
-            queueViewModel = queueViewModel,
+        MiniPlayerScreen(
+            playerController = PlayerController.getInstance(),
+            queueManager = queueViewModel,
+            navController = navController,
+            onNavigateToFullPlayer = {
+                // Navigate to audio player
+                navController.navigate(VPlayScreen.AudioPlayer.route)
+            },
             onNavigateToQueue = { 
                 // Navigate to dedicated queue screen
                 navController.navigate(VPlayScreen.Queue.route)
-            },
-            onRequestNotificationPermission = { 
-                navController.navigate("permissions")
             },
             modifier = Modifier.align(Alignment.BottomCenter)
         )
@@ -408,3 +415,5 @@ fun HomeScreen() {
         }
     }
 }
+
+

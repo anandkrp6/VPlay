@@ -84,3 +84,5 @@ val SuccessColor = Color(0xFF4CAF50)
 val WarningColor = Color(0xFFFF9800)
 val ErrorColor = Color(0xFFE57373)
 val InfoColor = Color(0xFF2196F3)
+
+

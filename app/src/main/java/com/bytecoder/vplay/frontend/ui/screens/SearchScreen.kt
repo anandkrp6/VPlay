@@ -24,25 +24,25 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.bytecoder.vplay.backend.data.models.MediaItemModel
-import com.bytecoder.vplay.frontend.viewmodels.SearchViewModel
-import com.bytecoder.vplay.frontend.viewmodels.PlaybackQueueViewModel
+import com.bytecoder.vplay.backend.managers.SearchScreenManager
+import com.bytecoder.vplay.backend.managers.PlaybackQueueManager
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
     navController: NavController,
-    queueViewModel: PlaybackQueueViewModel,
-    searchViewModel: SearchViewModel = viewModel()
+    queueManager: PlaybackQueueManager,
+    SearchScreenManager: SearchScreenManager = viewModel()
 ) {
     val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
     
     var searchQuery by remember { mutableStateOf("") }
-    val searchResults by searchViewModel.searchResults.collectAsState()
-    val isSearching by searchViewModel.isSearching.collectAsState()
-    val recentSearches by searchViewModel.recentSearches.collectAsState()
+    val searchResults by SearchScreenManager.searchResults.collectAsState()
+    val isSearching by SearchScreenManager.isSearching.collectAsState()
+    val recentSearches by SearchScreenManager.recentSearches.collectAsState()
     
     // Auto-focus search field
     LaunchedEffect(Unit) {
@@ -61,9 +61,9 @@ fun SearchScreen(
             onValueChange = { 
                 searchQuery = it
                 if (it.isNotBlank()) {
-                    searchViewModel.search(it)
+                    SearchScreenManager.search(it)
                 } else {
-                    searchViewModel.clearResults()
+                    SearchScreenManager.clearResults()
                 }
             },
             modifier = Modifier
@@ -82,7 +82,7 @@ fun SearchScreen(
                 if (searchQuery.isNotEmpty()) {
                     IconButton(onClick = { 
                         searchQuery = ""
-                        searchViewModel.clearResults()
+                        SearchScreenManager.clearResults()
                     }) {
                         Icon(Icons.Filled.Clear, contentDescription = "Clear")
                     }
@@ -92,8 +92,8 @@ fun SearchScreen(
             keyboardActions = KeyboardActions(
                 onSearch = {
                     if (searchQuery.isNotBlank()) {
-                        searchViewModel.search(searchQuery)
-                        searchViewModel.addToRecentSearches(searchQuery)
+                        SearchScreenManager.search(searchQuery)
+                        SearchScreenManager.addToRecentSearches(searchQuery)
                     }
                     keyboardController?.hide()
                 }
@@ -122,12 +122,12 @@ fun SearchScreen(
                             item = item,
                             onClick = {
                                 // Add to queue and play
-                                queueViewModel.addToQueue(item)
-                                queueViewModel.setCurrentIndex(queueViewModel.queue.value?.size?.minus(1) ?: 0)
+                                queueManager.addToQueue(item)
+                                queueManager.setCurrentIndex(queueManager.queue.value?.size?.minus(1) ?: 0)
                                 navController.navigate("audio_player")
                             },
                             onAddToQueue = {
-                                queueViewModel.addToQueue(item)
+                                queueManager.addToQueue(item)
                             }
                         )
                     }
@@ -150,7 +150,7 @@ fun SearchScreen(
                                 Icon(Icons.Filled.History, contentDescription = null)
                             },
                             trailingContent = {
-                                IconButton(onClick = { searchViewModel.removeFromRecentSearches(search) }) {
+                                IconButton(onClick = { SearchScreenManager.removeFromRecentSearches(search) }) {
                                     Icon(Icons.Filled.Close, contentDescription = "Remove")
                                 }
                             },
@@ -158,7 +158,7 @@ fun SearchScreen(
                                 .fillMaxWidth()
                                 .clickable {
                                     searchQuery = search
-                                    searchViewModel.search(search)
+                                    SearchScreenManager.search(search)
                                 }
                         )
                     }
@@ -213,7 +213,7 @@ fun SearchScreen(
                                 .fillMaxWidth()
                                 .clickable {
                                     searchQuery = suggestion
-                                    searchViewModel.search(suggestion)
+                                    SearchScreenManager.search(suggestion)
                                 }
                         )
                     }
@@ -265,3 +265,5 @@ private fun SearchResultItem(
             .clickable { onClick() }
     )
 }
+
+

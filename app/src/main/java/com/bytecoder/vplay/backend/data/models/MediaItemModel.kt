@@ -9,3 +9,5 @@ data class MediaItemModel(
     val durationMs: Long = 0L,
     val thumbnailPath: String? = null
 )
+
+

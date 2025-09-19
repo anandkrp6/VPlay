@@ -1,4 +1,4 @@
-package com.bytecoder.vplay.frontend.viewmodels
+package com.bytecoder.vplay.backend.managers
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -10,7 +10,7 @@ import com.bytecoder.vplay.backend.data.models.OnlineContentModel
 import com.bytecoder.vplay.backend.data.models.MediaItemModel
 import com.bytecoder.vplay.backend.managers.MusicLibraryManager
 
-class PlaybackQueueViewModel : ViewModel() {
+class PlaybackQueueManager : ViewModel() {
     private var musicLibraryManager: MusicLibraryManager? = null
     
     fun setMusicLibraryManager(context: Context) {
@@ -243,3 +243,6 @@ class PlaybackQueueViewModel : ViewModel() {
         }
     }
 }
+
+
+

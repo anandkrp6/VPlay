@@ -1,18 +1,13 @@
-package com.bytecoder.vplay.frontend.ui.player
+package com.bytecoder.vplay.frontend.ui.screens.player
 
-import androidx.compose.animation.AnimatedVisibility
+import android.content.Intent
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,8 +16,6 @@ import androidx.compose.foundation.layout.Spacer
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 import com.bytecoder.vplay.backend.managers.MusicLibraryManager
-import com.bytecoder.vplay.backend.managers.PlayerManager
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,7 +24,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -54,19 +46,6 @@ import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.Subtitles
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.automirrored.filled.QueueMusic
-import androidx.compose.material.icons.filled.Repeat
-import androidx.compose.material.icons.filled.RepeatOne
-import androidx.compose.material.icons.filled.Shuffle
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material.icons.automirrored.filled.VolumeDown
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -75,26 +54,22 @@ import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import com.bytecoder.vplay.frontend.ui.components.SleepTimerButton
-import com.bytecoder.vplay.frontend.ui.components.EqualizerDialog
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -111,25 +86,25 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.bytecoder.vplay.backend.data.models.MediaItemModel
-import com.bytecoder.vplay.frontend.viewmodels.PlaybackQueueViewModel
+import com.bytecoder.vplay.backend.managers.PlaybackQueueManager
 import com.bytecoder.vplay.frontend.ui.theme.VPlayTheme
-import com.bytecoder.vplay.frontend.viewmodels.AudioPlayerViewModel
+import com.bytecoder.vplay.backend.managers.AudioPlayerScreenManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AudioPlayerScreen(
-    queueViewModel: PlaybackQueueViewModel,
+    queueManager: PlaybackQueueManager,
     navController: NavController,
-    audioPlayerViewModel: AudioPlayerViewModel = viewModel()
+    AudioPlayerScreenManager: AudioPlayerScreenManager = viewModel()
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val currentMedia by queueViewModel.currentMedia.observeAsState()
-    val isPlaying by queueViewModel.isPlaying.observeAsState(false)
-    val currentPosition by queueViewModel.currentPosition.observeAsState(0L)
-    val duration by queueViewModel.duration.observeAsState(0L)
-    val queue by queueViewModel.queue.observeAsState(emptyList())
-    val currentIndex by queueViewModel.currentIndex.observeAsState(0)
+    val currentMedia by queueManager.currentMedia.observeAsState()
+    val isPlaying by queueManager.isPlaying.observeAsState(false)
+    val currentPosition by queueManager.currentPosition.observeAsState(0L)
+    val duration by queueManager.duration.observeAsState(0L)
+    val queue by queueManager.queue.observeAsState(emptyList())
+    val currentIndex by queueManager.currentIndex.observeAsState(0)
     
     var volume by remember { mutableFloatStateOf(0.8f) }
     var isShuffleEnabled by remember { mutableStateOf(false) }
@@ -204,7 +179,7 @@ fun AudioPlayerScreen(
                         queue = queue,
                         currentIndex = currentIndex,
                         onTrackSelected = { index ->
-                            queueViewModel.seekToQueueItem(index)
+                            queueManager.seekToQueueItem(index)
                         },
                         modifier = Modifier.height(400.dp)
                     )
@@ -368,7 +343,7 @@ fun AudioPlayerScreen(
                                     value = if (duration > 0) (currentPosition.toFloat() / duration.toFloat()) else 0f,
                                     onValueChange = { progress ->
                                         val newPosition = (progress * duration).toLong()
-                                        queueViewModel.seekTo(newPosition)
+                                        queueManager.seekTo(newPosition)
                                     },
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = SliderDefaults.colors(
@@ -420,7 +395,7 @@ fun AudioPlayerScreen(
                                 IconButton(
                                     onClick = { 
                                         isShuffleEnabled = !isShuffleEnabled
-                                        queueViewModel.setShuffleMode(isShuffleEnabled)
+                                        queueManager.setShuffleMode(isShuffleEnabled)
                                     },
                                     modifier = Modifier.size(48.dp)
                                 ) {
@@ -435,7 +410,7 @@ fun AudioPlayerScreen(
                                 
                                 // Previous with larger size
                                 FilledIconButton(
-                                    onClick = { queueViewModel.skipToPrevious() },
+                                    onClick = { queueManager.skipToPrevious() },
                                     modifier = Modifier.size(56.dp),
                                     colors = IconButtonDefaults.filledIconButtonColors(
                                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
@@ -452,8 +427,8 @@ fun AudioPlayerScreen(
                                 // Enhanced Play/Pause button (more prominent)
                                 FilledIconButton(
                                     onClick = { 
-                                        if (isPlaying) queueViewModel.pause() 
-                                        else queueViewModel.play()
+                                        if (isPlaying) queueManager.pause() 
+                                        else queueManager.play()
                                     },
                                     modifier = Modifier.size(80.dp),
                                     colors = IconButtonDefaults.filledIconButtonColors(
@@ -470,7 +445,7 @@ fun AudioPlayerScreen(
                                 
                                 // Next with larger size
                                 FilledIconButton(
-                                    onClick = { queueViewModel.skipToNext() },
+                                    onClick = { queueManager.skipToNext() },
                                     modifier = Modifier.size(56.dp),
                                     colors = IconButtonDefaults.filledIconButtonColors(
                                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
@@ -488,7 +463,7 @@ fun AudioPlayerScreen(
                                 IconButton(
                                     onClick = { 
                                         repeatMode = (repeatMode + 1) % 3
-                                        queueViewModel.setRepeatMode(repeatMode)
+                                        queueManager.setRepeatMode(repeatMode)
                                     },
                                     modifier = Modifier.size(48.dp)
                                 ) {
@@ -557,14 +532,15 @@ fun AudioPlayerScreen(
                                     IconButton(
                                         onClick = { 
                                             currentMedia?.let { media ->
-                                                val shareIntent = android.content.Intent().apply {
-                                                    action = android.content.Intent.ACTION_SEND
-                                                    type = "text/plain"
-                                                    putExtra(android.content.Intent.EXTRA_TEXT, 
+                                                val shareIntent = Intent().apply {
+                                                    Intent.setAction = Intent.ACTION_SEND
+                                                    Intent.setType = "text/plain"
+                                                    putExtra(
+                                                        Intent.EXTRA_TEXT,
                                                         "Now playing: ${media.title}${media.subtitle?.let { " by $it" } ?: ""}")
-                                                    putExtra(android.content.Intent.EXTRA_SUBJECT, "Check out this song!")
+                                                    putExtra(Intent.EXTRA_SUBJECT, "Check out this song!")
                                                 }
-                                                context.startActivity(android.content.Intent.createChooser(shareIntent, "Share"))
+                                                context.startActivity(Intent.createChooser(shareIntent, "Share"))
                                             }
                                         }
                                     ) {
@@ -627,7 +603,7 @@ fun AudioPlayerScreen(
                                         value = volume,
                                         onValueChange = { 
                                             volume = it
-                                            audioPlayerViewModel.setVolume(it)
+                                            AudioPlayerScreenManager.setVolume(it)
                                         },
                                         modifier = Modifier
                                             .weight(1f)
@@ -731,7 +707,7 @@ fun QueueBottomSheet(
                 Row {
                     IconButton(
                         onClick = { 
-                            // queueViewModel.shuffleQueue()
+                            // queueManager.shuffleQueue()
                             // isShuffleEnabled = !isShuffleEnabled
                         }
                     ) {
@@ -743,7 +719,7 @@ fun QueueBottomSheet(
                     }
                     IconButton(
                         onClick = { 
-                            // queueViewModel.clearQueue()
+                            // queueManager.clearQueue()
                         }
                     ) {
                         Icon(
@@ -844,7 +820,7 @@ fun QueueBottomSheet(
                                 onClick = { 
                                     // Show track options menu (remove from queue, add to playlist, etc.)
                                     // For now, just remove from queue
-                                    // queueViewModel.removeFromQueue(index)
+                                    // queueManager.removeFromQueue(index)
                                 }
                             ) {
                                 Icon(
@@ -869,3 +845,5 @@ private fun formatTime(timeMs: Long): String {
     val seconds = totalSeconds % 60
     return "%d:%02d".format(minutes, seconds)
 }
+
+

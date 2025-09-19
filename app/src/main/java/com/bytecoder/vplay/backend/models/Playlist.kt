@@ -1,6 +1,6 @@
-package com.bytecoder.vplay.frontend.viewmodels
+package com.bytecoder.vplay.backend.models
 
-data class PlaylistModel(
+data class Playlist(
     val id: String,
     val name: String,
     val description: String = "",
@@ -11,5 +11,6 @@ data class PlaylistModel(
     val isFavorite: Boolean = false,
     val playCount: Int = 0,
     val createdDate: Long = System.currentTimeMillis(),
-    val lastModifiedDate: Long = System.currentTimeMillis()
+    val modifiedDate: Long = System.currentTimeMillis()
 )
+

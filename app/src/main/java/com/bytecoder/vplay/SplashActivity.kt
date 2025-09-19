@@ -185,3 +185,5 @@ fun SplashScreen(onAnimationComplete: () -> Unit) {
         )
     }
 }
+
+

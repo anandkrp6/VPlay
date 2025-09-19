@@ -21,3 +21,5 @@ data class FileItem(
     val isTextFile: Boolean
         get() = extension.lowercase() in listOf("txt", "md", "xml", "json", "html", "css", "js", "kt", "java")
 }
+
+

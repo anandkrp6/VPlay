@@ -9,14 +9,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.bytecoder.vplay.frontend.viewmodels.HistoryViewModel
+import com.bytecoder.vplay.backend.managers.HistoryScreenManager
 import com.bytecoder.vplay.backend.utils.HistoryTracker
 import java.text.SimpleDateFormat
 import java.util.*
@@ -25,17 +24,17 @@ import java.util.*
 @Composable
 fun HistoryScreen(
     navController: NavController,
-    historyViewModel: HistoryViewModel = viewModel()
+    HistoryScreenManager: HistoryScreenManager = viewModel()
 ) {
     val context = LocalContext.current
     
     // Initialize the view model
     LaunchedEffect(Unit) {
-        historyViewModel.initialize(context)
+        HistoryScreenManager.initialize(context)
     }
     
     // Collect history items from the view model
-    val historyItems by historyViewModel.historyItems.collectAsStateWithLifecycle()
+    val historyItems by HistoryScreenManager.historyItems.collectAsStateWithLifecycle()
     
     var showClearDialog by remember { mutableStateOf(false) }
     
@@ -120,7 +119,7 @@ fun HistoryScreen(
                             }
                         },
                         onRemove = {
-                            historyViewModel.removeFromHistory(item.id)
+                            HistoryScreenManager.removeFromHistory(item.id)
                         }
                     )
                 }
@@ -146,7 +145,7 @@ fun HistoryScreen(
             confirmButton = {
                 TextButton(
                     onClick = { 
-                        historyViewModel.clearAllHistory()
+                        HistoryScreenManager.clearAllHistory()
                         showClearDialog = false 
                     }
                 ) {
@@ -351,3 +350,5 @@ private fun formatDuration(durationMs: Long): String {
         String.format("%d:%02d", minutes, seconds)
     }
 }
+
+

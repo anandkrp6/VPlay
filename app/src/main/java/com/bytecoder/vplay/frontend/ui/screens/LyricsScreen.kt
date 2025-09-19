@@ -1,4 +1,4 @@
-package com.bytecoder.vplay.frontend.ui.player
+package com.bytecoder.vplay.frontend.ui.screens
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -19,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -27,22 +26,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
-import com.bytecoder.vplay.backend.managers.PlayerManager
-import com.bytecoder.vplay.frontend.viewmodels.PlaybackQueueViewModel
-import kotlinx.coroutines.delay
+import com.bytecoder.vplay.backend.managers.PlaybackQueueManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LyricsScreen(
     mediaId: String,
     navController: NavController,
-    queueViewModel: PlaybackQueueViewModel
+    queueManager: PlaybackQueueManager
 ) {
     val context = LocalContext.current
     val position by PlayerManager.position.observeAsState(0L)
     val duration by PlayerManager.duration.observeAsState(0L)
     val isPlaying by PlayerManager.isPlaying.observeAsState(false)
-    
+
     // Sample lyrics data - in a real app, this would be loaded from the media metadata or external service
     val lyrics = remember {
         listOf(
@@ -77,9 +74,9 @@ fun LyricsScreen(
             LyricLine(84000L, "The music will carry on...")
         )
     }
-    
+
     val listState = rememberLazyListState()
-    
+
     // Auto-scroll to current lyric
     LaunchedEffect(position) {
         val currentIndex = lyrics.indexOfLast { it.timestamp <= position }
@@ -90,7 +87,7 @@ fun LyricsScreen(
             )
         }
     }
-    
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -179,22 +176,22 @@ fun LyricsScreen(
                         }
                     }
                 }
-                
+
                 itemsIndexed(lyrics) { index, lyric ->
                     LyricLineItem(
                         lyric = lyric,
-                        isActive = position >= lyric.timestamp && 
+                        isActive = position >= lyric.timestamp &&
                                   (index == lyrics.lastIndex || position < lyrics[index + 1].timestamp),
                         isPlaying = isPlaying
                     )
                 }
-                
+
                 item {
                     // Bottom padding for better scrolling
                     Spacer(modifier = Modifier.height(100.dp))
                 }
             }
-            
+
             // Mini playback controls overlay
             if (isPlaying || position > 0) {
                 Card(
@@ -215,9 +212,9 @@ fun LyricsScreen(
                             modifier = Modifier.fillMaxWidth(),
                             color = MaterialTheme.colorScheme.primary
                         )
-                        
+
                         Spacer(modifier = Modifier.height(8.dp))
-                        
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -228,7 +225,7 @@ fun LyricsScreen(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            
+
                             Row {
                                 IconButton(
                                     onClick = { PlayerManager.previous() }
@@ -238,7 +235,7 @@ fun LyricsScreen(
                                         contentDescription = "Previous"
                                     )
                                 }
-                                
+
                                 IconButton(
                                     onClick = { PlayerManager.playPause() }
                                 ) {
@@ -247,7 +244,7 @@ fun LyricsScreen(
                                         contentDescription = if (isPlaying) "Pause" else "Play"
                                     )
                                 }
-                                
+
                                 IconButton(
                                     onClick = { PlayerManager.next() }
                                 ) {
@@ -257,7 +254,7 @@ fun LyricsScreen(
                                     )
                                 }
                             }
-                            
+
                             Text(
                                 text = formatTime(duration),
                                 style = MaterialTheme.typography.bodySmall,
@@ -282,13 +279,13 @@ private fun LyricLineItem(
         animationSpec = tween(300),
         label = "lyric_alpha"
     )
-    
+
     val scale by animateFloatAsState(
         targetValue = if (isActive) 1.05f else 1f,
         animationSpec = tween(300),
         label = "lyric_scale"
     )
-    
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -314,7 +311,7 @@ private fun LyricLineItem(
                     .fillMaxWidth()
                     .alpha(alpha)
             )
-            
+
             // Subtle highlight background for active lyric
             if (isActive) {
                 Box(
@@ -343,3 +340,5 @@ private data class LyricLine(
     val timestamp: Long, // in milliseconds
     val text: String
 )
+
+

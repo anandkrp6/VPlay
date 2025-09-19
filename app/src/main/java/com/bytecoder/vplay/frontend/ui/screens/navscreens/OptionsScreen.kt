@@ -1,4 +1,4 @@
-package com.bytecoder.vplay.frontend.ui.screens
+package com.bytecoder.vplay.frontend.ui.screens.navscreens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -188,3 +188,5 @@ private data class OptionItem(
     val icon: ImageVector,
     val route: String
 )
+
+

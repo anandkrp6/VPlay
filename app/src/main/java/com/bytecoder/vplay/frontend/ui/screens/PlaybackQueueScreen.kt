@@ -1,12 +1,7 @@
 package com.bytecoder.vplay.frontend.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -21,7 +16,6 @@ import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DragHandle
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -34,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
@@ -44,18 +37,18 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.bytecoder.vplay.backend.data.models.MediaItemModel
-import com.bytecoder.vplay.frontend.viewmodels.PlaybackQueueViewModel
+import com.bytecoder.vplay.backend.managers.PlaybackQueueManager
 import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun QueueScreen(
-    queueViewModel: PlaybackQueueViewModel,
+    queueManager: PlaybackQueueManager,
     navController: NavController
 ) {
-    val queue by queueViewModel.queue.observeAsState(emptyList())
-    val currentIndex by queueViewModel.currentIndex.observeAsState(0)
-    val isPlaying by queueViewModel.isPlaying.observeAsState(false)
+    val queue by queueManager.queue.observeAsState(emptyList())
+    val currentIndex by queueManager.currentIndex.observeAsState(0)
+    val isPlaying by queueManager.isPlaying.observeAsState(false)
     
     var showClearDialog by remember { mutableStateOf(false) }
     var showSavePlaylistDialog by remember { mutableStateOf(false) }
@@ -99,7 +92,7 @@ fun QueueScreen(
                 actions = {
                     // Shuffle queue
                     IconButton(
-                        onClick = { queueViewModel.setShuffleMode(true) }
+                        onClick = { queueManager.setShuffleMode(true) }
                     ) {
                         Icon(
                             Icons.Default.Shuffle,
@@ -159,9 +152,9 @@ fun QueueScreen(
                         index = index,
                         isCurrentPlaying = index == currentIndex,
                         isPlaying = isPlaying && index == currentIndex,
-                        onItemClick = { queueViewModel.seekToQueueItem(index) },
-                        onDeleteClick = { queueViewModel.removeFromQueue(index) },
-                        onMoveItem = { from, to -> queueViewModel.moveItem(from, to) },
+                        onItemClick = { queueManager.seekToQueueItem(index) },
+                        onDeleteClick = { queueManager.removeFromQueue(index) },
+                        onMoveItem = { from, to -> queueManager.moveItem(from, to) },
                         modifier = Modifier.animateItemPlacement()
                     )
                 }
@@ -183,7 +176,7 @@ fun QueueScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        queueViewModel.clearQueue()
+                        queueManager.clearQueue()
                         showClearDialog = false
                     }
                 ) {
@@ -221,7 +214,7 @@ fun QueueScreen(
                 TextButton(
                     onClick = {
                         if (playlistName.isNotBlank()) {
-                            queueViewModel.saveQueueAsPlaylist(playlistName)
+                            queueManager.saveQueueAsPlaylist(playlistName)
                             showSavePlaylistDialog = false
                             playlistName = ""
                         }
@@ -461,3 +454,5 @@ fun EmptyQueueContent(navController: NavController) {
         }
     }
 }
+
+

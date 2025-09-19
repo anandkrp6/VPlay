@@ -1,4 +1,4 @@
-package com.bytecoder.vplay.frontend.viewmodels
+package com.bytecoder.vplay.backend.managers
 
 import android.app.Application
 import androidx.compose.runtime.getValue
@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class VideosViewModel(application: Application) : AndroidViewModel(application) {
+class VideoLibraryScreenManager(application: Application) : AndroidViewModel(application) {
     
     private val videoLibraryManager = VideoLibraryManager(application)
     private val mediaObserver = MediaStoreObserver(application) { mediaType ->
@@ -144,4 +144,11 @@ class VideosViewModel(application: Application) : AndroidViewModel(application) 
     fun refreshVideos() {
         loadVideos()
     }
+    
+    fun getVideoById(videoId: String): MediaItemModel? {
+        return _allVideos.value.find { it.id == videoId }
+    }
 }
+
+
+

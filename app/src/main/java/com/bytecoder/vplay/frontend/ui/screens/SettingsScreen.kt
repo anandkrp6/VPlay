@@ -4,7 +4,6 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -24,7 +23,6 @@ import androidx.compose.material.icons.filled.Adb
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.Animation
 import androidx.compose.material.icons.filled.Article
-import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.Brightness6
 import androidx.compose.material.icons.filled.BrightnessAuto
 import androidx.compose.material.icons.filled.BugReport
@@ -69,7 +67,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -99,38 +96,38 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.bytecoder.vplay.frontend.viewmodels.SettingsViewModel
+import com.bytecoder.vplay.backend.managers.SettingsScreenManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     navController: NavController,
-    settingsViewModel: SettingsViewModel = viewModel()
+    SettingsScreenManager: SettingsScreenManager = viewModel()
 ) {
     val context = LocalContext.current
     
     // Settings state
-    val darkModeEnabled by settingsViewModel.darkModeEnabled.collectAsState()
-    val dynamicThemeEnabled by settingsViewModel.dynamicThemeEnabled.collectAsState()
-    val autoPlayEnabled by settingsViewModel.autoPlayEnabled.collectAsState()
-    val shuffleByDefault by settingsViewModel.shuffleByDefault.collectAsState()
-    val crossfadeEnabled by settingsViewModel.crossfadeEnabled.collectAsState()
-    val highQualityEnabled by settingsViewModel.highQualityEnabled.collectAsState()
-    val notificationsEnabled by settingsViewModel.notificationsEnabled.collectAsState()
-    val backgroundPlayEnabled by settingsViewModel.backgroundPlayEnabled.collectAsState()
-    val gridViewEnabled by settingsViewModel.gridViewEnabled.collectAsState()
-    val animationsEnabled by settingsViewModel.animationsEnabled.collectAsState()
-    val immersiveModeEnabled by settingsViewModel.immersiveModeEnabled.collectAsState()
-    val headphoneDetectionEnabled by settingsViewModel.headphoneDetectionEnabled.collectAsState()
-    val smartSkipEnabled by settingsViewModel.smartSkipEnabled.collectAsState()
-    val defaultPlaybackSpeed by settingsViewModel.defaultPlaybackSpeed.collectAsState()
-    val autoDownloadEnabled by settingsViewModel.autoDownloadEnabled.collectAsState()
-    val analyticsEnabled by settingsViewModel.analyticsEnabled.collectAsState()
-    val downloadLocation by settingsViewModel.downloadLocation.collectAsState()
-    val locationServicesEnabled by settingsViewModel.locationServicesEnabled.collectAsState()
-    val historyTrackingEnabled by settingsViewModel.historyTrackingEnabled.collectAsState()
-    val usageAnalyticsEnabled by settingsViewModel.usageAnalyticsEnabled.collectAsState()
-    val debugModeEnabled by settingsViewModel.debugModeEnabled.collectAsState()
+    val darkModeEnabled by SettingsScreenManager.darkModeEnabled.collectAsState()
+    val dynamicThemeEnabled by SettingsScreenManager.dynamicThemeEnabled.collectAsState()
+    val autoPlayEnabled by SettingsScreenManager.autoPlayEnabled.collectAsState()
+    val shuffleByDefault by SettingsScreenManager.shuffleByDefault.collectAsState()
+    val crossfadeEnabled by SettingsScreenManager.crossfadeEnabled.collectAsState()
+    val highQualityEnabled by SettingsScreenManager.highQualityEnabled.collectAsState()
+    val notificationsEnabled by SettingsScreenManager.notificationsEnabled.collectAsState()
+    val backgroundPlayEnabled by SettingsScreenManager.backgroundPlayEnabled.collectAsState()
+    val gridViewEnabled by SettingsScreenManager.gridViewEnabled.collectAsState()
+    val animationsEnabled by SettingsScreenManager.animationsEnabled.collectAsState()
+    val immersiveModeEnabled by SettingsScreenManager.immersiveModeEnabled.collectAsState()
+    val headphoneDetectionEnabled by SettingsScreenManager.headphoneDetectionEnabled.collectAsState()
+    val smartSkipEnabled by SettingsScreenManager.smartSkipEnabled.collectAsState()
+    val defaultPlaybackSpeed by SettingsScreenManager.defaultPlaybackSpeed.collectAsState()
+    val autoDownloadEnabled by SettingsScreenManager.autoDownloadEnabled.collectAsState()
+    val analyticsEnabled by SettingsScreenManager.analyticsEnabled.collectAsState()
+    val downloadLocation by SettingsScreenManager.downloadLocation.collectAsState()
+    val locationServicesEnabled by SettingsScreenManager.locationServicesEnabled.collectAsState()
+    val historyTrackingEnabled by SettingsScreenManager.historyTrackingEnabled.collectAsState()
+    val usageAnalyticsEnabled by SettingsScreenManager.usageAnalyticsEnabled.collectAsState()
+    val debugModeEnabled by SettingsScreenManager.debugModeEnabled.collectAsState()
     
     var showThemeDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
@@ -151,7 +148,7 @@ fun SettingsScreen(
         uri?.let {
             // Convert URI to a readable path for display
             val displayPath = it.lastPathSegment?.replace("primary:", "Internal Storage/") ?: "Internal Storage/VPlay"
-            settingsViewModel.setDownloadLocation(displayPath)
+            SettingsScreenManager.setDownloadLocation(displayPath)
         }
     }
 
@@ -194,7 +191,7 @@ fun SettingsScreen(
                         title = "Dynamic Colors",
                         subtitle = "Use system colors (Material You)",
                         checked = dynamicThemeEnabled,
-                        onCheckedChange = { settingsViewModel.setDynamicTheme(it) }
+                        onCheckedChange = { SettingsScreenManager.setDynamicTheme(it) }
                     )
                     
                     SettingsItem(
@@ -210,7 +207,7 @@ fun SettingsScreen(
                         title = "Grid View",
                         subtitle = "Show albums and playlists in grid layout",
                         checked = gridViewEnabled,
-                        onCheckedChange = { settingsViewModel.setGridView(it) }
+                        onCheckedChange = { SettingsScreenManager.setGridView(it) }
                     )
                     
                     SettingsToggleItem(
@@ -218,7 +215,7 @@ fun SettingsScreen(
                         title = "Animations",
                         subtitle = "Enable smooth animations and transitions",
                         checked = animationsEnabled,
-                        onCheckedChange = { settingsViewModel.setAnimations(it) }
+                        onCheckedChange = { SettingsScreenManager.setAnimations(it) }
                     )
                     
                     var showFontSizeDialog by remember { mutableStateOf(false) }
@@ -245,7 +242,7 @@ fun SettingsScreen(
                         title = "Immersive Mode",
                         subtitle = "Hide status bar during playback",
                         checked = immersiveModeEnabled,
-                        onCheckedChange = { settingsViewModel.setImmersiveMode(it) }
+                        onCheckedChange = { SettingsScreenManager.setImmersiveMode(it) }
                     )
                 }
             }
@@ -258,7 +255,7 @@ fun SettingsScreen(
                         title = "Auto Play",
                         subtitle = "Continue playing after current song ends",
                         checked = autoPlayEnabled,
-                        onCheckedChange = { settingsViewModel.setAutoPlay(it) }
+                        onCheckedChange = { SettingsScreenManager.setAutoPlay(it) }
                     )
                     
                     SettingsToggleItem(
@@ -266,7 +263,7 @@ fun SettingsScreen(
                         title = "Shuffle by Default",
                         subtitle = "Start playback in shuffle mode",
                         checked = shuffleByDefault,
-                        onCheckedChange = { settingsViewModel.setShuffleByDefault(it) }
+                        onCheckedChange = { SettingsScreenManager.setShuffleByDefault(it) }
                     )
                     
                     SettingsToggleItem(
@@ -274,7 +271,7 @@ fun SettingsScreen(
                         title = "Crossfade",
                         subtitle = "Smooth transition between tracks",
                         checked = crossfadeEnabled,
-                        onCheckedChange = { settingsViewModel.setCrossfade(it) }
+                        onCheckedChange = { SettingsScreenManager.setCrossfade(it) }
                     )
                     
                     if (crossfadeEnabled) {
@@ -293,7 +290,7 @@ fun SettingsScreen(
                         title = "Background Play",
                         subtitle = "Continue playing when app is minimized",
                         checked = backgroundPlayEnabled,
-                        onCheckedChange = { settingsViewModel.setBackgroundPlay(it) }
+                        onCheckedChange = { SettingsScreenManager.setBackgroundPlay(it) }
                     )
                     
                     // New advanced playback options
@@ -302,7 +299,7 @@ fun SettingsScreen(
                         title = "Headphone Detection",
                         subtitle = "Pause when headphones are disconnected",
                         checked = headphoneDetectionEnabled,
-                        onCheckedChange = { settingsViewModel.setHeadphoneDetection(it) }
+                        onCheckedChange = { SettingsScreenManager.setHeadphoneDetection(it) }
                     )
                     
                     var showPlaybackSpeedDialog by remember { mutableStateOf(false) }
@@ -319,7 +316,7 @@ fun SettingsScreen(
                             currentSpeed = defaultPlaybackSpeed,
                             onDismiss = { showPlaybackSpeedDialog = false },
                             onSpeedSelected = { speed ->
-                                settingsViewModel.setDefaultPlaybackSpeed(speed)
+                                SettingsScreenManager.setDefaultPlaybackSpeed(speed)
                                 showPlaybackSpeedDialog = false
                             }
                         )
@@ -330,7 +327,7 @@ fun SettingsScreen(
                         title = "Smart Skip",
                         subtitle = "Skip silent parts in audio",
                         checked = smartSkipEnabled,
-                        onCheckedChange = { settingsViewModel.setSmartSkip(it) }
+                        onCheckedChange = { SettingsScreenManager.setSmartSkip(it) }
                     )
                 }
             }
@@ -360,7 +357,7 @@ fun SettingsScreen(
                         value = audioVolume,
                         onValueChange = { 
                             audioVolume = it
-                            settingsViewModel.setMasterVolume(it)
+                            SettingsScreenManager.setMasterVolume(it)
                         },
                         valueRange = 0f..1f
                     )
@@ -371,7 +368,7 @@ fun SettingsScreen(
                         value = bufferSize,
                         onValueChange = { 
                             bufferSize = it
-                            settingsViewModel.setBufferSize(it.toInt())
+                            SettingsScreenManager.setBufferSize(it.toInt())
                         },
                         valueRange = 10f..200f,
                         steps = 18
@@ -394,7 +391,7 @@ fun SettingsScreen(
                         title = "Auto Brightness",
                         subtitle = "Adjust brightness based on content",
                         checked = true,
-                        onCheckedChange = { settingsViewModel.setAutoBrightness(it) }
+                        onCheckedChange = { SettingsScreenManager.setAutoBrightness(it) }
                     )
                 }
             }
@@ -407,7 +404,7 @@ fun SettingsScreen(
                         title = "Enable Notifications",
                         subtitle = "Show playback controls in notification",
                         checked = notificationsEnabled,
-                        onCheckedChange = { settingsViewModel.setNotifications(it) }
+                        onCheckedChange = { SettingsScreenManager.setNotifications(it) }
                     )
                 }
             }
@@ -428,7 +425,7 @@ fun SettingsScreen(
                         icon = Icons.Default.DeleteSweep,
                         title = "Clear Cache",
                         subtitle = "Free up storage space",
-                        onClick = { settingsViewModel.clearCache() }
+                        onClick = { SettingsScreenManager.clearCache() }
                     )
                     
                     SettingsItem(
@@ -445,7 +442,7 @@ fun SettingsScreen(
                         title = "Auto Download",
                         subtitle = "Download songs when on Wi-Fi",
                         checked = autoDownloadEnabled,
-                        onCheckedChange = { settingsViewModel.setAutoDownload(it) }
+                        onCheckedChange = { SettingsScreenManager.setAutoDownload(it) }
                     )
                     
                     SettingsItem(
@@ -461,7 +458,7 @@ fun SettingsScreen(
                         value = bufferSize,
                         onValueChange = { 
                             bufferSize = it
-                            settingsViewModel.setBufferSize(it.toInt())
+                            SettingsScreenManager.setBufferSize(it.toInt())
                         },
                         valueRange = 10f..500f,
                         steps = 48
@@ -486,7 +483,7 @@ fun SettingsScreen(
                         title = "Usage Analytics",
                         subtitle = "Help improve VPlay by sharing usage data",
                         checked = analyticsEnabled,
-                        onCheckedChange = { settingsViewModel.setAnalytics(it) }
+                        onCheckedChange = { SettingsScreenManager.setAnalytics(it) }
                     )
                     
                     SettingsToggleItem(
@@ -511,7 +508,7 @@ fun SettingsScreen(
                             onDismiss = { showClearDataDialog = false },
                             onConfirm = {
                                 // Handle clearing all data
-                                settingsViewModel.clearAllData()
+                                SettingsScreenManager.clearAllData()
                                 showClearDataDialog = false
                             }
                         )
@@ -528,7 +525,7 @@ fun SettingsScreen(
                         title = "Location Services",
                         subtitle = "For local music discovery",
                         checked = locationServicesEnabled,
-                        onCheckedChange = { settingsViewModel.setLocationServices(it) }
+                        onCheckedChange = { SettingsScreenManager.setLocationServices(it) }
                     )
                     
                     SettingsToggleItem(
@@ -536,7 +533,7 @@ fun SettingsScreen(
                         title = "History Tracking",
                         subtitle = "Save playback history and recommendations",
                         checked = historyTrackingEnabled,
-                        onCheckedChange = { settingsViewModel.setHistoryTracking(it) }
+                        onCheckedChange = { SettingsScreenManager.setHistoryTracking(it) }
                     )
                     
                     SettingsToggleItem(
@@ -544,7 +541,7 @@ fun SettingsScreen(
                         title = "Usage Analytics",
                         subtitle = "Help improve the app with anonymous usage data",
                         checked = usageAnalyticsEnabled,
-                        onCheckedChange = { settingsViewModel.setUsageAnalytics(it) }
+                        onCheckedChange = { SettingsScreenManager.setUsageAnalytics(it) }
                     )
                     
                     SettingsItem(
@@ -577,7 +574,7 @@ fun SettingsScreen(
                         icon = Icons.Default.Update,
                         title = "Check for Updates",
                         subtitle = "You're up to date",
-                        onClick = { settingsViewModel.checkForUpdates() }
+                        onClick = { SettingsScreenManager.checkForUpdates() }
                     )
                     
                     SettingsItem(
@@ -629,7 +626,7 @@ fun SettingsScreen(
                         title = "Debug Mode",
                         subtitle = "Enable detailed logging",
                         checked = debugModeEnabled,
-                        onCheckedChange = { settingsViewModel.setDebugMode(it) }
+                        onCheckedChange = { SettingsScreenManager.setDebugMode(it) }
                     )
                     
                     SettingsItem(
@@ -663,7 +660,7 @@ fun SettingsScreen(
         ThemeSelectionDialog(
             currentTheme = if (darkModeEnabled) "Dark" else "Light",
             onThemeSelected = { theme ->
-                settingsViewModel.setDarkMode(theme == "Dark")
+                SettingsScreenManager.setDarkMode(theme == "Dark")
                 showThemeDialog = false
             },
             onDismiss = { showThemeDialog = false }
@@ -675,7 +672,7 @@ fun SettingsScreen(
         LanguageSelectionDialog(
             currentLanguage = "English",
             onLanguageSelected = { language ->
-                settingsViewModel.setLanguage(language)
+                SettingsScreenManager.setLanguage(language)
                 showLanguageDialog = false
             },
             onDismiss = { showLanguageDialog = false }
@@ -687,7 +684,7 @@ fun SettingsScreen(
         AudioQualityDialog(
             currentQuality = if (highQualityEnabled) "High Quality" else "Standard",
             onQualitySelected = { quality ->
-                settingsViewModel.setHighQuality(quality == "High Quality")
+                SettingsScreenManager.setHighQuality(quality == "High Quality")
                 showAudioQualityDialog = false
             },
             onDismiss = { showAudioQualityDialog = false }
@@ -699,7 +696,7 @@ fun SettingsScreen(
         VideoQualityDialog(
             currentQuality = "Auto",
             onQualitySelected = { quality ->
-                settingsViewModel.setVideoQuality(quality)
+                SettingsScreenManager.setVideoQuality(quality)
                 showVideoQualityDialog = false
             },
             onDismiss = { showVideoQualityDialog = false }
@@ -718,7 +715,7 @@ fun SettingsScreen(
         DownloadLocationDialog(
             currentLocation = downloadLocation,
             onLocationSelected = { location ->
-                settingsViewModel.setDownloadLocation(location)
+                SettingsScreenManager.setDownloadLocation(location)
                 showDownloadLocationDialog = false
             },
             onBrowseClicked = {
@@ -733,7 +730,7 @@ fun SettingsScreen(
     if (showBugReportDialog) {
         BugReportDialog(
             onSubmit = { description, email ->
-                settingsViewModel.submitBugReport(description, email)
+                SettingsScreenManager.submitBugReport(description, email)
                 showBugReportDialog = false
             },
             onDismiss = { showBugReportDialog = false }
@@ -1542,3 +1539,5 @@ private fun BugReportDialog(
         }
     )
 }
+
+

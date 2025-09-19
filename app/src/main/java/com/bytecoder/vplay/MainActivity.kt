@@ -7,17 +7,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.annotation.OptIn
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.core.view.WindowCompat
-import androidx.lifecycle.ViewModelProvider
 import androidx.media3.common.util.UnstableApi
-import com.bytecoder.vplay.frontend.viewmodels.PlaybackQueueViewModel
-import com.bytecoder.vplay.backend.managers.PlayerManager
-import com.bytecoder.vplay.backend.utils.AppSettings
-import com.bytecoder.vplay.VPlayApp
+import com.bytecoder.vplay.backend.managers.PlaybackQueueManager
 import com.bytecoder.vplay.frontend.ui.theme.VPlayTheme
 import android.Manifest
 import android.content.pm.PackageManager
@@ -26,7 +18,7 @@ import com.bytecoder.vplay.backend.services.PlaybackService
 
 class MainActivity : ComponentActivity() {
 
-    private val queueViewModel: PlaybackQueueViewModel by viewModels()
+    private val queueManager: PlaybackQueueManager by viewModels()
     
     private val notifPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -50,7 +42,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             VPlayTheme {
                 VPlayApp(
-                    queueViewModel = queueViewModel
+                    queueManager = queueViewModel
                 )
             }
         }
@@ -130,3 +122,5 @@ class MainActivity : ComponentActivity() {
             .build()
     }
 }
+
+

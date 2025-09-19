@@ -198,3 +198,5 @@ interface FileMetadataDao {
     @Query("DELETE FROM file_metadata WHERE analyzedAt < :before")
     suspend fun deleteOldMetadata(before: Long)
 }
+
+

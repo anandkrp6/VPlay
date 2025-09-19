@@ -39,3 +39,5 @@ object Bookmarks {
         prefs(ctx).edit().putString(KEY_URLS, Json.encodeToString(JsonArray.serializer(), arr)).apply()
     }
 }
+
+

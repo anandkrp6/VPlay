@@ -1,4 +1,4 @@
-package com.bytecoder.vplay.frontend.viewmodels
+package com.bytecoder.vplay.backend.managers
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
@@ -9,6 +9,7 @@ import com.bytecoder.vplay.backend.managers.MusicAlbum
 import com.bytecoder.vplay.backend.managers.MusicArtist
 import com.bytecoder.vplay.backend.managers.MusicPlaylist
 import com.bytecoder.vplay.backend.utils.MediaStoreObserver
+import com.bytecoder.vplay.backend.controllers.PlayerController
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,9 +19,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
-class MusicLibraryViewModel : ViewModel() {
+class MusicLibraryScreenManager : ViewModel() {
     private var musicLibraryManager: MusicLibraryManager? = null
     private var mediaObserver: MediaStoreObserver? = null
+    private val playerController = PlayerController.getInstance()
     
     private val _allTracks = MutableStateFlow<List<MusicTrack>>(emptyList())
     private val _tracks = MutableStateFlow<List<MusicTrack>>(emptyList())
@@ -87,6 +89,50 @@ class MusicLibraryViewModel : ViewModel() {
                 _isLoading.value = false
             }
         }
+    }
+    
+    /**
+     * Play a single track - delegates to PlayerController
+     */
+    fun playTrack(track: MusicTrack) {
+        playerController.playTrack(track)
+    }
+    
+    /**
+     * Play all tracks starting from specified track
+     */
+    fun playTrackList(tracks: List<MusicTrack>, startIndex: Int = 0) {
+        if (tracks.isNotEmpty()) {
+            val mediaFiles = tracks.map { track ->
+                com.bytecoder.vplay.backend.models.MediaFile(
+                    id = track.id,
+                    title = track.title,
+                    uri = track.uri,
+                    isVideo = false,
+                    artist = track.artist,
+                    album = track.album,
+                    duration = track.duration
+                )
+            }
+            playerController.setQueue(mediaFiles, startIndex)
+            playerController.play()
+        }
+    }
+    
+    /**
+     * Add track to current queue
+     */
+    fun addTrackToQueue(track: MusicTrack) {
+        val mediaFile = com.bytecoder.vplay.backend.models.MediaFile(
+            id = track.id,
+            title = track.title,
+            uri = track.uri,
+            isVideo = false,
+            artist = track.artist,
+            album = track.album,
+            duration = track.duration
+        )
+        playerController.addToQueue(mediaFile)
     }
     
     fun toggleFavorite(trackId: String) {
@@ -210,3 +256,6 @@ class MusicLibraryViewModel : ViewModel() {
         mediaObserver?.stopObserving()
     }
 }
+
+
+
